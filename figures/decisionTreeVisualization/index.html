@@ -40,7 +40,7 @@
             .append("g")
             .attr("transform", "translate(150,0)");
 
-    d3.json("./flare_reports/flare53.json", function (error, root) { // flare225 is the bomb
+    d3.json("./flare_reports/000_BestOfAll_flare225.json", function (error, root) { // flare225 is the bomb
         if (error) throw error;
 
         var nodes = cluster.nodes(root),
