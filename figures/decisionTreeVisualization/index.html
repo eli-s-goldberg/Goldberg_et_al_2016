@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+    .node circle {
+        fill: #fff;
+        stroke: steelblue;
+        stroke-width: 1px;
+    }
+
+    .node {
+        font: 11px sans-serif;
+    }
+
+    .link {
+        fill: none;
+        stroke: #ccc;
+        /*stroke-width: 1.5px;*/
+    }
+
+</style>
+<body>
+<script src="//d3js.org/d3.v3.min.js"></script>
+<script>
+
+
+    var width = 650, height = 800;
+
+    var cluster = d3.layout.cluster()
+            .size([height, width - 160]);
+
+    var diagonal = d3.svg.diagonal()
+            .projection(function (d) {
+                return [d.y, d.x];
+            });
+
+    var svg = d3.select("body").append("svg")
+            .attr("width", width * 1.5)
+            .attr("height", height)
+            .append("g")
+            .attr("transform", "translate(150,0)");
+
+    d3.json("./flare_reports/flare53.json", function (error, root) { // flare225 is the bomb
+        if (error) throw error;
+
+        var nodes = cluster.nodes(root),
+                links = cluster.links(nodes);
+
+        var link = svg.selectAll(".link")
+                .data(links)
+                .enter().append("path")
+                .attr("class", "link")
+                .attr("stroke-width", function (d) {
+                    return (d.target.samples / 5);
+                })
+                .attr("d", diagonal);
+
+        var node = svg.selectAll(".node")
+                .data(nodes)
+                .enter().append("g")
+                .attr("class", "node")
+                .attr("transform", function (d) {
+                    return "translate(" + d.y + "," + d.x + ")";
+                })
+
+        node.append("circle")
+                .attr("r", 8.5);
+
+        node.append("text")
+                .attr("dx", function (d) {
+                    return d.children ? -12 : 12;
+                })
+                .attr("dy", 3)
+                .style("text-anchor", function (d) {
+                    return d.children ? "end" : "start";
+                })
+                .text(function (d) {
+                    return [d.name, d.samples, d.impurity];
+                });
+    });
+
+    d3.select(self.frameElement).style("height", height + "px");
+
+</script>
+
