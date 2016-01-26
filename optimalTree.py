@@ -10,7 +10,11 @@ Note that, becuase there are elements of stochasticity in the decision tree grow
 obtain the optimal decision tree (n.b. for most cases, there is never an optimal decision tree). Here, we cannot
 guarentee optimality, but we can iteratively investigate the results of the decision tree and pick the best one.
 
-Here we employ 5000 decision tree runs and then
+Here we employ 5000 decision tree runs and report the index of the best one. This index value should be used to declare
+the location of the output hierarchical JSON file (flareXX.json), which is output to the 
+figures/decisionTreeVisualization/flare_reports folder. Once the index has been located, modify the appropriate variable
+in the index.html file contained within teh decisionTreeVisualization folder and run it. This should present the tree
+in all it's glory:)
 '''
 import multiprocessing
 
