@@ -1,4 +1,4 @@
-# Goldberg_et_al_2016 - brute force determination of the optimal decision tree
+## Goldberg_et_al_2016: brute force determination of the optimal decision tree
 
 ## What does this application do?
 This program imports a developed database, converts it to dimensionless fluid dynamics and colloidal interaction parameters, and then trains a decision tree based on those features. 
