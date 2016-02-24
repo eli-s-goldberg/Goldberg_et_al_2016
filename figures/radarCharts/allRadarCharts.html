@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <title>Smoothed D3.js Radar Chart</title>
+
+    <!-- Google fonts -->
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,300' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Raleway' rel='stylesheet' type='text/css'>
+
+    <!-- D3.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
+
+    <style>
+        body {
+            font-family: 'Open Sans', sans-serif;
+            font-size: 11px;
+            font-weight: 300;
+            fill: #242424;
+            text-align: center;
+            text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, -1px 0 0 #fff, 0 -1px 0 #fff;
+            cursor: default;
+        }
+
+        .legend {
+            font-family: 'Raleway', sans-serif;
+            fill: #333333;
+        }
+
+        .tooltip {
+            fill: #333333;
+        }
+    </style>
+
+</head>
+<body>
+
+<div class="radarChart"></div>
+
+<script src="radarChart.js"></script>
+<script>
+    //////////////////////////////////////////////////////////////
+    //////////////////////// Set-Up //////////////////////////////
+    //////////////////////////////////////////////////////////////
+    var margin = {top: 100, right: 100, bottom: 100, left: 100},
+            width = Math.min(700, window.innerWidth - 10) - margin.left - margin.right,
+            height = Math.min(width, window.innerHeight - margin.top - margin.bottom - 20);
+
+    var data = [
+        [ //upper
+//{axis: "CV for M_inj", value: 0.532223099121},
+{axis: "CV for ConcIn", value: 1.39647000617},
+{axis: "CV for ConcHA", value: 1.94429746652},
+{axis: "CV for N_r", value: 1.15275352341},
+{axis: "CV for N_a", value: 2.91804322544},
+{axis: "CV for N_g", value: 4.6972735696},
+//{axis: "CV for N_Pe", value: 1.37852131215},
+{axis: "CV for N_Lo", value: 1.2279585933},
+{axis: "CV for N_Dl", value: 1.23452504498}
+//{axis: "CV for N_as", value: 0.106199131432},
+//{axis: "CV for N_CA", value: 0.444510348866},
+//{axis: "CV for N_Z2", value: 0.237510425843},
+//{axis: "CV for N_Z1", value: 0.619318823516},
+],[ //lower
+//{axis: "CV for M_inj", value: 0.0654313724099},
+{axis: "CV for ConcIn", value: 0.196373824039},
+{axis: "CV for ConcHA", value: 1.25856441035},
+{axis: "CV for N_r", value: 0.515787187905},
+{axis: "CV for N_a", value: 0.552233854207},
+{axis: "CV for N_g", value: 1.01649613262},
+//{axis: "CV for N_Pe", value: 0.32095396995},
+{axis: "CV for N_Lo", value: 0.478970385051},
+{axis: "CV for N_Dl", value: 0.816751158426}
+//{axis: "CV for N_as", value: 0.0749449864228},
+//{axis: "CV for N_CA", value: 0.0473469639056},
+//{axis: "CV for N_Z2", value: 0.226378966002},
+//{axis: "CV for N_Z1", value: 0.405496837371},
+],
+//        [ // upper 2
+////{axis: "CV for M_inj", value: 0.18188788593},
+//{axis: "CV for ConcIn", value: 1.11010055055},
+//{axis: "CV for ConcHA", value: 1.03455052297},
+//{axis: "CV for N_r", value: 0.0601817990019},
+//{axis: "CV for N_a", value: 0.133605167916},
+//{axis: "CV for N_g", value: 1.11796594906},
+////{axis: "CV for N_Pe", value: 0.167622409075},
+//{axis: "CV for N_Lo", value: 0.124975745811},
+//{axis: "CV for N_Dl", value: 2.44094704894},
+//{axis: "CV for N_as", value: 0.0469581783618},
+//{axis: "CV for N_CA", value: 0.334945317404},
+//{axis: "CV for N_Z2", value: 0.436672078374},
+//{axis: "CV for N_Z1", value: 0.463944169892},
+//],
+
+]            ;
+    //////////////////////////////////////////////////////////////
+    //////////////////// Draw the Chart //////////////////////////
+    //////////////////////////////////////////////////////////////
+    var color = d3.scale.ordinal()
+            .range(["#EDC951", "#CC333F", "#00A0B0"]);
+
+    var radarChartOptions = {
+        w: width,
+        h: height,
+        margin: margin,
+        maxValue: 5,
+        levels: 5,
+        roundStrokes: false,
+        color: color
+    };
+    //Call function to draw the Radar chart
+    RadarChart(".radarChart", data, radarChartOptions);
+</script>
+</body>
+</html>
