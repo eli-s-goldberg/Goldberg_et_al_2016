@@ -197,7 +197,7 @@ if __name__ == '__main__':  # wrap inside to prevent parallelize errors on windo
 
         # encode the categorical variables using a one-hot scheme so they're correctly considered in decision tree
         ohe_enc = OneHotEncoder()
-        trainingData, _, _ = one_hot_dataframe(trainingData, ['NMId', 'ConcIn', 'Coating', 'TypeNOM'], replace=True)
+        trainingData, _, _ = one_hot_dataframe(trainingData, ['NMId', 'Coating', 'TypeNOM'], replace=True)
 
         # assign the target data as yAll and the training data as XAll. Notice that we train AND test on the same data.
         # This is not commmon, but we're employing the decision tree for a descriptive evaluation, not it's generic
