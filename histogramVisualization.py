@@ -21,8 +21,8 @@ import re
 from sklearn.metrics import classification_report
 
 # Set path
-path = '/Users/future/Google Drive/phd_root/programming_root/enmTransportPrediction/'
-# path = os.path.join('./')
+# path = '/Users/future/Google Drive/phd_root/programming_root/enmTransportPrediction/'
+path = os.path.join('./')
 
 # Set model iterations, cross folds, and randomness
 iterations = 1  # Number of model iterations
@@ -226,7 +226,7 @@ if __name__ == '__main__':  # wrap inside to prevent parallelize errors on windo
             nonexponGrouped.columns = [str(parameter[0]), 'nonexponential']
             CombinedGrouped = pd.concat([exponGrouped, nonexponGrouped['nonexponential']], axis=1)
 
-            pathIter = os.path.join('figures', 'Histograms', 'tmps', str('tmp' + parameter[0] + 'tmp.csv'))
+            pathIter = os.path.join('figures', 'histograms', 'tmps', str('tmp' + parameter[0] + 'tmp.csv'))
 
             file = open(pathIter, "w").close()  # if there is an existing file with this name, clear it.
             file = open(pathIter, "a")
@@ -267,7 +267,7 @@ if __name__ == '__main__':  # wrap inside to prevent parallelize errors on windo
             file.close()
 
             file = open(pathIter, "r")
-            pathIterTMP = os.path.join('figures', 'Histograms', str(parameter[0] + '.csv'))
+            pathIterTMP = os.path.join('figures', 'histograms', str(parameter[0] + '.csv'))
             filewrite = open(pathIterTMP, 'w').close()
             filewrite = open(pathIterTMP, 'a')
             firstLine = 0
@@ -342,7 +342,7 @@ if __name__ == '__main__':  # wrap inside to prevent parallelize errors on windo
 
             # print CombinedGrouped
             # print CombinedGrouped
-            pathIter = os.path.join('figures', 'Histograms', 'tmps', str('tmp' + parameter[0] + 'tmp.csv'))
+            pathIter = os.path.join('figures', 'histograms', 'tmps', str('tmp' + parameter[0] + 'tmp.csv'))
 
             file = open(pathIter, "w").close()  # if there is an existing file with this name, clear it.
             file = open(pathIter, "a")
@@ -383,7 +383,7 @@ if __name__ == '__main__':  # wrap inside to prevent parallelize errors on windo
             file.close()
 
             file = open(pathIter, "r")
-            pathIterTMP = os.path.join('figures', 'Histograms', str(parameter[0] + '.csv'))
+            pathIterTMP = os.path.join('figures', 'histograms', str(parameter[0] + '.csv'))
             filewrite = open(pathIterTMP, 'w').close()
             filewrite = open(pathIterTMP, 'a')
             firstLine = 0
