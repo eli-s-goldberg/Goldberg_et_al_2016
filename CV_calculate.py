@@ -156,7 +156,7 @@ normalizedOut['blue']= dfOut.iloc[2]/(dfOut.iloc[0])
 normalizedOut = normalizedOut.transpose()
 dfOut = normalizedOut
 
-pathWrite = os.path.join(path,'figures', 'radarCharts', str('RadardData.txt'))
+pathWrite = os.path.join(path,'figures', 'radarCharts', str('RadarData.txt'))
 
 file = open(pathWrite, "w").close()  # if there is an existing file with this name, clear it.
 file = open(pathWrite, "a")
