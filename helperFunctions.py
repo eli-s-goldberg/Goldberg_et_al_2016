@@ -1,3 +1,17 @@
+import errno
+import os
+
+def make_dirs(path):
+  """Recursively make directories, ignoring when they already exist.
+
+  See: http://stackoverflow.com/a/600612/1275412
+  """
+  try:
+    os.makedirs(path)
+  except OSError as exc:
+    if exc.errno != errno.EEXIST or not os.path.isdir(path):
+      raise
+
 def binaryRPClassAssign(row):
     if (row.ObsRPShape == 'EXP' or row.ObsRPShape == 'HE'):
         a = 0

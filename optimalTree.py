@@ -23,6 +23,7 @@ from helperFunctions import *
 from sklearn.preprocessing import OneHotEncoder
 import pandas as pd
 import os
+import numpy.random
 from sklearn import metrics
 from sklearn import grid_search
 
@@ -32,45 +33,43 @@ import pydot
 import json
 from sklearn.metrics import classification_report
 
-# Set path
-path = os.path.join('./')
+# TODO(peterthenelson) Break up into functions
+# TODO(peterthenelson) Use argparse module for flags
+def main(path='.', iterations=50, deterministic=False):
+    # Set model iterations, cross folds, and randomness
+    kNum = 5  # Number of cross folds
 
-# Set model iterations, cross folds, and randomness
-iterations = 50  # Number of model iterations
-kNum = 5  # Number of cross folds
+    # Set stack names for
+    importNames = []
+    for i in range(0, iterations):
+        importNames.append('enmTransportData.xlsx')
 
-# Set stack names for
-importNames = []
-for i in range(0, iterations):
-    importNames.append('enmTransportData.xlsx')
+    # initialize containers for speed
+    rfecvGridScoresAll = pd.DataFrame()
+    bestParamsResults = pd.DataFrame()
+    dfGoodBadDataTrain = pd.DataFrame()
+    optimumLengthAll = pd.DataFrame()
+    outputScoresCV = pd.DataFrame()
+    testIndexTrack = pd.DataFrame()
+    trainIndexTrack = pd.DataFrame()
+    mseScoresTrack = pd.DataFrame()
+    featureImportanceStore = pd.DataFrame()
+    r2scoreHoldoutTrack = pd.DataFrame()
+    CVR2scoreTrack = pd.DataFrame()
+    rfecvGridScoresAll = pd.DataFrame()
+    optimumLengthAll = pd.DataFrame()
+    nameListAll = pd.DataFrame()
+    nameListAll = pd.DataFrame()
+    y_pred2Track = pd.DataFrame()
+    y_holdoutTrack = pd.DataFrame()
+    rfecvGridScoresWithRegNameTrack = pd.DataFrame()
+    contourTrack = pd.DataFrame()
+    xxTrack = pd.DataFrame()
+    yyTrack = pd.DataFrame()
+    y_randTest = pd.DataFrame()
+    f1_binary_average_score_track = []
+    f1_report = pd.DataFrame()
 
-# initialize containers for speed
-rfecvGridScoresAll = pd.DataFrame()
-bestParamsResults = pd.DataFrame()
-dfGoodBadDataTrain = pd.DataFrame()
-optimumLengthAll = pd.DataFrame()
-outputScoresCV = pd.DataFrame()
-testIndexTrack = pd.DataFrame()
-trainIndexTrack = pd.DataFrame()
-mseScoresTrack = pd.DataFrame()
-featureImportanceStore = pd.DataFrame()
-r2scoreHoldoutTrack = pd.DataFrame()
-CVR2scoreTrack = pd.DataFrame()
-rfecvGridScoresAll = pd.DataFrame()
-optimumLengthAll = pd.DataFrame()
-nameListAll = pd.DataFrame()
-nameListAll = pd.DataFrame()
-y_pred2Track = pd.DataFrame()
-y_holdoutTrack = pd.DataFrame()
-rfecvGridScoresWithRegNameTrack = pd.DataFrame()
-contourTrack = pd.DataFrame()
-xxTrack = pd.DataFrame()
-yyTrack = pd.DataFrame()
-y_randTest = pd.DataFrame()
-f1_binary_average_score_track = []
-f1_report = pd.DataFrame()
-
-if __name__ == '__main__':  # wrap inside to prevent parallelize errors on windows.
     run = 0  # set initial run ID
 
     for name in importNames:  # Loop through all model iterations by looping through database names
@@ -80,7 +79,8 @@ if __name__ == '__main__':  # wrap inside to prevent parallelize errors on windo
         print run  # Print for convenience
 
         # import database as a function of path and iterated database name
-        alphaDataset = pd.read_excel(os.path.join(path, 'transport_database', name))
+        alphaDataset = pd.read_excel(os.path.join(
+            os.path.dirname(__file__), 'transport_database', name))
 
         # Identify columns that are not needed for the assessment and drop
         dropColumnList = [
@@ -103,7 +103,7 @@ if __name__ == '__main__':  # wrap inside to prevent parallelize errors on windo
         alphaDataset = alphaDataset.dropna()
 
         # save the dataset for later inspection and use as refinedDataset
-        alphaDataset.to_csv('refinedDataset.csv')
+        alphaDataset.to_csv(os.path.join(path, 'refinedDataset.csv'))
 
         # copy the refined dataset to a new variable.
         trainingData = alphaDataset.copy(deep=True)
@@ -178,7 +178,7 @@ if __name__ == '__main__':  # wrap inside to prevent parallelize errors on windo
         trainingData['TypeNOM'] = trainingData.apply(TypeNOMClassAssign, axis=1)
 
         # Output a final copy of the training data for later use
-        trainingData.to_csv('./trainingdataAll.csv', index=False, header=True)
+        trainingData.to_csv(os.path.join(path, 'trainingdataAll.csv'), index=False, header=True)
 
         # Drop overlapping features - Combination assessment: temporary
         trainingData = trainingData.drop(['PublicationTitle', 'relPermValue', 'PartDensity', 'PvIn', 'Poros', 'D_l',
@@ -189,8 +189,8 @@ if __name__ == '__main__':  # wrap inside to prevent parallelize errors on windo
                                           ], 1)
 
         # More saving, post feature drop.
-        targetData.to_csv('./targetdata.csv', index=False, header=True)
-        trainingData.to_csv('./trainingdata.csv', index=False, header=True)
+        targetData.to_csv(os.path.join(path, 'targetdata.csv'), index=False, header=True)
+        trainingData.to_csv(os.path.join(path, 'trainingdata.csv'), index=False, header=True)
 
         # for use with the decision tree, get the remaining feature names
         feature_names = list(trainingData.columns.values)
@@ -209,14 +209,19 @@ if __name__ == '__main__':  # wrap inside to prevent parallelize errors on windo
         clf = tree.DecisionTreeClassifier()
 
         # set a grid of parameters to investigate
+        random_state = [None]
+        if deterministic:
+          random_state = [666]
         dpgrid = {'max_depth': [3, 4, 5],
                   'min_samples_leaf': [5, 6, 7, 8, 9, 10],
                   'max_features': [None, 'sqrt', 'log2'],  # , 'sqrt', 'log2'
-                  'random_state': [None]
+                  'random_state': random_state,
                   # 'class_weight': ['balanced'] # balance messes up the feature cound, use with caution
                   }
 
         # investigate the best possible set of parameters using a cross validation loop and the given grid
+        # The cross-validation does not do random shuffles, but the estimator does use randomness (and 
+        # takes random_state via dpgrid.
         gridSearch = grid_search.GridSearchCV(estimator=clf,
                                               cv=kNum,
                                               param_grid=dpgrid,
@@ -253,7 +258,7 @@ if __name__ == '__main__':  # wrap inside to prevent parallelize errors on windo
         y_pred_frame = pd.DataFrame(y_pred, columns=['predicted'])
         y_truth_frame = pd.DataFrame(yAll, columns=['truth'])
         comparison = pd.concat([y_pred_frame, y_truth_frame], axis=1)
-        comparison.to_csv('comparison.csv')
+        comparison.to_csv(os.path.join(path, 'comparison.csv'))
 
         ## The following section creates figures to visualize the decision tree as a PDF and to plot in D3 (java/html)
         # Feature elimination is not included here, but was included previously. This grabs only the names in the
@@ -261,7 +266,9 @@ if __name__ == '__main__':  # wrap inside to prevent parallelize errors on windo
         grabWorkingNames = [str(i) for i in list(trainingData)]
 
         # set the path to save the json representation.
-        json_path = os.path.join(path, 'figures', 'decisionTreeVisualization', 'flare_reports', 'flare' + str(run) + '.json')
+        json_dir = os.path.join(path, 'figures', 'decisionTreeVisualization', 'flare_reports') 
+        make_dirs(json_dir)
+        json_path = os.path.join(json_dir, 'flare' + str(run) + '.json')
 
         dataTargetNames = ['exponential', 'nonexponential']
         r = rules(clf, grabWorkingNames, dataTargetNames)
@@ -277,14 +284,19 @@ if __name__ == '__main__':  # wrap inside to prevent parallelize errors on windo
                              )
 
         graph = pydot.graph_from_dot_data(dot_data.getvalue())
-        graph.write_pdf(str(path) + '/output/trees/tree' + str(run) + '.pdf')
-        class_reportPath = os.path.join(path, 'figures', 'decisionTreeVisualization', 'class_reports',
-                                        'class_report' + str(run) + '.txt')
+        make_dirs(os.path.join(path, 'output/trees/tree'))
+        graph.write_pdf(os.path.join(path, 'output/trees/tree', str(run) + '.pdf'))
+        class_report_dir = os.path.join(path, 'figures', 'decisionTreeVisualization', 'class_reports')
+        make_dirs(class_report_dir)
+        class_report_path = os.path.join(class_report_dir,
+                                         'class_report' + str(run) + '.txt')
+        # TODO(peterthenelson) This doesn't make sense; if we want the file
+        # overwritten, we can just open as 'w' and write to it.
         # if there is an existing file with this name, clear it.
-        file = open(class_reportPath, "w").close()
+        file = open(class_report_path, "w").close()
 
         # write code custom json because nothing else works.
-        file = open(class_reportPath, "a")
+        file = open(class_report_path, "a")
 
         file.write(classification_report(yAll, y_pred, target_names=['exponential', 'nonexponential']))
         file.write('\n')
@@ -293,5 +305,8 @@ if __name__ == '__main__':  # wrap inside to prevent parallelize errors on windo
     ReportSavePath = os.path.join(path, 'figures', 'decisionTreeVisualization', 'DecisiontreeScores' + str(run) + '.csv')
     f1_report.to_csv(ReportSavePath)
     f1_report.reset_index(inplace=True)
-    print f1_report.describe
+    print f1_report.describe()
     print "best performing decision tree index: ", f1_report['average'].argmax()
+
+if __name__ == '__main__':  # wrap inside to prevent parallelize errors on windows.
+    main()
