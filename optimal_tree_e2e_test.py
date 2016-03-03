@@ -1,4 +1,4 @@
-"""End-to-end test for the optimalTree pipeline.
+"""End-to-end test for the optimal_tree pipeline.
 
 This is a characterization test in Michael Feathers' sense of the term. It's not
 something I plan to keep around; it just provides some assurance that
@@ -13,11 +13,62 @@ import shutil
 import tempfile
 import unittest
 
-import optimalTree
+import optimal_tree
 
 TESTDATA_PATH = os.path.join(os.path.dirname(__file__), 'testdata')
 
+def dir_eq(dircmp, recursive=True):
+    """Compare two directories for equality and print out diffs.
+
+    Adapted from filecmp.dircmp source.
+
+    Parameters
+    ----------
+    dircmp : dircmp
+    recursive : bool, optional
+
+    Returns
+    -------
+    bool
+        Are the directories (and optionally subdirectories) equal, including
+        the contents of their files?
+
+    """
+    equal = True
+    if dircmp.left_only:
+        equal = False
+        print 'Only in', dircmp.left, ':', sorted(dircmp.left_only)
+    if dircmp.right_only:
+        equal = False
+        print 'Only in', dircmp.right, ':', sorted(dircmp.right_only)
+    if dircmp.diff_files:
+        equal = False
+        dircmp.diff_files.sort()
+        print 'Differing files :', dircmp.diff_files
+        for fname in dircmp.diff_files:
+            fname1 = os.path.join(dircmp.left, fname)
+            with open(fname1) as file1:
+                lines1 = file1.readlines()
+            fname2 = os.path.join(dircmp.right, fname)
+            with open(fname2) as file2:
+                lines2 = file2.readlines()
+            for line in difflib.unified_diff(
+                    lines1, lines2, fromfile=fname1, tofile=fname2):
+                print line,
+    if dircmp.funny_files:
+        equal = False
+        print 'Trouble with common files :', sorted(dircmp.funny_files)
+    if dircmp.common_funny:
+        equal = False
+        print 'Common funny cases :', sorted(dircmp.common_funny)
+    if recursive:
+        for subdir in dircmp.subdirs.itervalues():
+            # NOTE: ordering important
+            equal = dir_eq(subdir, recursive=True) and equal
+    return equal
+
 class OptimalTreeE2ETest(unittest.TestCase):
+    """End-to-end test for optimal_tree module."""
 
     def setUp(self):
         self.tmpdir = tempfile.mkdtemp()
@@ -26,53 +77,14 @@ class OptimalTreeE2ETest(unittest.TestCase):
         shutil.rmtree(self.tmpdir)
 
     def assert_dirs_equal(self, dir1, dir2):
-        """Assert that directories are equal, printing out diff.
-
-        Helper functions adapted from filecmp.dircmp source.
-        """
-        dc = filecmp.dircmp(dir1, dir2)
+        """Assert that directories are equal, printing out diff."""
         self.assertTrue(
-            self._dir_eq(dc),
+            dir_eq(filecmp.dircmp(dir1, dir2)),
             msg=('Directories %s and %s differ!' % (dir1, dir2)))
 
-    def _dir_eq(self, dc):
-        eq = True
-        if dc.left_only:
-            eq = False
-            print 'Only in', dc.left, ':', sorted(dc.left_only)
-        if dc.right_only:
-            eq = False
-            print 'Only in', dc.right, ':', sorted(dc.right_only)
-        if dc.diff_files:
-            eq = False
-            dc.diff_files.sort()
-            print 'Differing files :', dc.diff_files
-            for f in dc.diff_files:
-                fname1 = os.path.join(dc.left, f)
-                with open(fname1) as f1:
-                    lines1 = f1.readlines()
-                fname2 = os.path.join(dc.right, f)
-                with open(fname2) as f2:
-                    lines2 = f2.readlines()
-                for line in difflib.unified_diff(
-                    lines1, lines2, fromfile=fname1, tofile=fname2):
-                    print line,
-        if dc.funny_files:
-            eq = False
-            print 'Trouble with common files :', sorted(dc.funny_files)
-        if dc.common_funny:
-            eq = False
-            print 'Common funny cases :', sorted(dc.common_funny)
-        return eq
-
-    def _full_closure_eq(dc):
-        eq = self._dir_eq(dc)
-        for sd in dc.subdirs.itervalues():
-            eq = eq and self._full_closure_eq(sd)
-        return eq
-
     def test_optimal_tree(self):
-        optimalTree.main(path=self.tmpdir, iterations=2, deterministic=True)
+        """Compare full run of optimal_tree against a golden output dir."""
+        optimal_tree.main(path=self.tmpdir, iterations=2, deterministic=True)
         self.assert_dirs_equal(TESTDATA_PATH, self.tmpdir)
 
 if __name__ == '__main__':
