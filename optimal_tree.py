@@ -42,6 +42,20 @@ from helperFunctions import (
 # TODO(peterthenelson) Break up into functions
 # TODO(peterthenelson) Use argparse module for flags
 def main(path='.', iterations=50, deterministic=False, crossfolds=5):
+    """Find optimal decision tree, write output files.
+
+    Parameters
+    ----------
+    path : str
+        Path to output directory.
+    iterations : int
+        Number of runs of fitting the model.
+    deterministic : bool
+        Turn off randomness (for testing).
+    crossfolds : int
+        Number of folds for crossvalidation.
+
+    """
     # TODO(peternelson) Is this supposed to be configurable?
     import_names = ['enmTransportData.xlsx'] * iterations
     # Loop through all model interactions by looping through database names
@@ -116,7 +130,7 @@ def main(path='.', iterations=50, deterministic=False, crossfolds=5):
             tempdf = pd.DataFrame(
                 train_data_feature_inspect[features].factorize()[1],
                 columns=[features])
-            training_feature_uniques = pd.concat(
+            training_feature_uniques = pd.concat( # pylint:disable=redefined-variable-type
                 [training_feature_uniques, tempdf], axis=1)
             train_data_feature_inspect[features] = (
                 train_data_feature_inspect[features].factorize()[0])
@@ -241,7 +255,7 @@ def main(path='.', iterations=50, deterministic=False, crossfolds=5):
         f1_track['exponential'] = f1_binary_average_score_exp,
         f1_track['nonexponential'] = f1_binary_average_score_nonexp
         f1_track['average'] = f1_binary_average_score
-        f1_report = f1_report.append(f1_track)
+        f1_report = f1_report.append(f1_track) # pylint:disable=redefined-variable-type
         f1_binary_average_score_track.append(f1_binary_average_score)
 
         # Compare the predictions to the truth directly and outut a file
@@ -261,7 +275,7 @@ def main(path='.', iterations=50, deterministic=False, crossfolds=5):
         json_dir = os.path.join(
             path, 'figures', 'decisionTreeVisualization', 'flare_reports')
         make_dirs(json_dir)
-        json_path = os.path.join(json_dir, 'flare' + str(run) + '.json')
+        json_path = os.path.join(json_dir, 'flare%d.json' % (run+1))
 
         data_target_names = ['exponential', 'nonexponential']
         tree_rules = rules(clf, grab_working_names, data_target_names)
@@ -278,12 +292,12 @@ def main(path='.', iterations=50, deterministic=False, crossfolds=5):
         graph = pydot.graph_from_dot_data(dot_data.getvalue())
         make_dirs(os.path.join(path, 'output/trees/tree'))
         graph.write_pdf(
-            os.path.join(path, 'output/trees/tree', str(run) + '.pdf'))
+            os.path.join(path, 'output/trees/tree/%d.pdf' % (run+1)))
         class_report_dir = os.path.join(
             path, 'figures', 'decisionTreeVisualization', 'class_reports')
         make_dirs(class_report_dir)
         class_report_path = os.path.join(class_report_dir,
-                                         'class_report' + str(run) + '.txt')
+                                         'class_report%d.txt' % (run+1))
         with open(class_report_path, "w") as outf:
             outf.write(classification_report(
                 y_all, y_pred, target_names=['exponential', 'nonexponential']))
@@ -291,7 +305,7 @@ def main(path='.', iterations=50, deterministic=False, crossfolds=5):
 
     report_save_path = os.path.join(
         path, 'figures', 'decisionTreeVisualization',
-        'DecisiontreeScores' + str(run) + '.csv')
+        'DecisiontreeScores%d.csv' % (run+1))
     f1_report.to_csv(report_save_path)
     f1_report.reset_index(inplace=True)
     print f1_report.describe()

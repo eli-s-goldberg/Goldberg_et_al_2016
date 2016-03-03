@@ -18,7 +18,7 @@ TODOs
 
 ### Testing and Refactoring
 - Write tests for the helper functions.
-- Break up optimalTree into functions and test them.
+- Break up optimal_tree into functions and test them.
 
 ### Style
 - Many style changes in py files (and their names in some cases).
