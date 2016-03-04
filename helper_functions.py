@@ -1,39 +1,40 @@
+"""Helper functions for optimal_tree pipeline."""
+
+import ast
+from decimal import Decimal
 import errno
+import math
 import os
+import pandas
+from sklearn.feature_extraction import DictVectorizer
 
 def make_dirs(path):
-  """Recursively make directories, ignoring when they already exist.
+    """Recursively make directories, ignoring when they already exist.
 
-  See: http://stackoverflow.com/a/600612/1275412
-  """
-  try:
-    os.makedirs(path)
-  except OSError as exc:
-    if exc.errno != errno.EEXIST or not os.path.isdir(path):
-      raise
+    See: http://stackoverflow.com/a/600612/1275412
+    """
+    try:
+        os.makedirs(path)
+    except OSError as exc:
+        if exc.errno != errno.EEXIST or not os.path.isdir(path):
+            raise
 
 def binaryRPClassAssign(row):
-    if (row.ObsRPShape == 'EXP' or row.ObsRPShape == 'HE'):
-        a = 0
+    if row.ObsRPShape in ["EXP", "HE"]:
+        return 0
     else:
-        a = 1
-    # print a
-    return a
+        return 1
 
 def binaryRPClassAssignLabels(row):
-    if (row.ObsRPShape == "EXP" or row.ObsRPShape == "HE"):
-        a =  "exponential"
+    if row.ObsRPShape in ["EXP", "HE"]:
+        return "exponential"
     else:
-        a = "nonexponential"
-    # print a
-    return a
+        return "nonexponential"
 
 def dimAspectRatioAssign(row):
     return float(row.PartDiam / row.CollecDiam)
 
-
 def dimPecletNumAssign(row):
-    import math
     bolzConstant = float(1.3806504 * 10 ** -23)
     tempK = 25 + 273.15
     diffusionCoef = float(bolzConstant * tempK / (3 * math.pi * 8.94e-4 * row.PartDiam))
@@ -41,31 +42,26 @@ def dimPecletNumAssign(row):
 
 
 def gravitationalNumber(row):
-    import math
     p_radius = float((row.PartDiam) / 2)
     bolzConstant = float(1.3806504 * 10 ** -23)
     tempK = 25 + 273.15
-    return float((4 / 3) * (math.pi * p_radius ** 4) * (row.PartDensity - 1000) * 9.81 / (bolzConstant * tempK))
+    # TODO(peterthenelson) 4/3 is a bug (==> 1, not 1.3...).
+    return float((4/3) * math.pi * (p_radius**4) * (row.PartDensity-1000) *
+                 9.81 / (bolzConstant * tempK))
 
 
 def attractionNumber(row):
-    import math
     p_radius = float((row.PartDiam) / 2)
     denominator = 12 * math.pi * p_radius ** 2 * row.Darcy
     return float(row.Hamaker / denominator)
 
 
 def gravityNumber(row):
-    import math
-    A = float(-3.7188)
-    B = float(578.919)
-    C = float(-137.546)
-    tempK = row.tempKelvin
-
-    absVisc = float(math.exp(A + (B / (C + tempK))))
+    temp = row.tempKelvin
+    abs_visc = float(math.exp(-3.7188 + (578.919 / (-137.546 + temp))))
     p_radius = float((row.PartDiam) / 2)
     numerator = (2 * p_radius ** 2) * (row.PartDensity - 1000) * 9.81
-    demoninator = 8 * absVisc * row.Darcy
+    demoninator = 8 * abs_visc * row.Darcy
     return float(numerator / demoninator)
 
 
@@ -74,26 +70,30 @@ def debyeLength(row):
     bolzConstant = float(1.3806504 * 10 ** -23)
     elecCharge = float(1.602176466 * 10 ** -19)
     numAvagadro = float(6.02 * 10 ** 23)
-    if (row['SaltType'] == 3):
+    if row['SaltType'] == 3:
         ionStr1 = float(1 * 10 ** (float(row['pH']) - 14))
         ionStr2 = float(1 * 10 ** (-1 * float(row['pH'])))
         ZiCi = float(1 ** 2 * ionStr1 + 1 ** 2 * ionStr2)
         return float((1 / (float((numAvagadro * elecCharge ** 2 / (
-            permFreeSpace * float(row['relPermValue']) * bolzConstant * float(row['tempKelvin'])) * ZiCi) ** 0.5))))
-    elif (row['SaltType'] == 1):
-        ZiCi = float(2 ** 2 * float(row['IonStr']) + 1 ** 2 * 2 * float(row['IonStr']))
+            permFreeSpace * float(row['relPermValue']) * bolzConstant *
+            float(row['tempKelvin'])) * ZiCi) ** 0.5))))
+    elif row['SaltType'] == 1:
+        ZiCi = float(2 ** 2 * float(row['IonStr']) + 1 ** 2 * 2 *
+                     float(row['IonStr']))
         return float((1 / (float((numAvagadro * elecCharge ** 2 / (
-            permFreeSpace * float(row['relPermValue']) * bolzConstant * float(row['tempKelvin'])) * ZiCi) ** 0.5))))
-    elif (row['IonStr'] == 0):
+            permFreeSpace * float(row['relPermValue']) * bolzConstant *
+            float(row['tempKelvin'])) * ZiCi) ** 0.5))))
+    elif row['IonStr'] == 0:
         return 1000e-9  # about 1um
     else:
-        ZiCi = float(1 ** 2 * float(row['IonStr']) + 1 ** 2 * float(row['IonStr']))
+        ZiCi = float(1 ** 2 * float(row['IonStr']) + 1 ** 2 *
+                     float(row['IonStr']))
         return float((1 / (float((numAvagadro * elecCharge ** 2 / (
-            permFreeSpace * float(row['relPermValue']) * bolzConstant * float(row['tempKelvin'])) * ZiCi) ** 0.5))))
+            permFreeSpace * float(row['relPermValue']) * bolzConstant *
+            float(row['tempKelvin'])) * ZiCi) ** 0.5))))
 
 
 def massFlow(row):
-    import math
     L = row.colLength
     W = row.colWidth
     A = float(math.pi / 4 * row.colWidth ** 2)
@@ -114,49 +114,36 @@ def electrokinetic1(row):
 
 
 def electrokinetic2(row):
-    v = 7.83e-9  # dialectric constant of water at 25C in coulombs/volt/m
-    a = row.PartDiam / 2  # particle radius
     Zp = row.PartZeta / 1e3  # particle zeta potential
     Zc = row.CollecZeta / 1e3  # collector zeta potential
-    k = float(1.3806504 * 10 ** -23)  # boltzmann constant
-    T = row.tempKelvin  # temperature
     numerator = 2 * (Zp / Zc)
     denominator = 1 + (Zp / Zc) ** 2
     return float(numerator / denominator)
 
+_REL_PERMITTIVITIES = {
+    0: 4.4,    # C60
+    1: 110.0,  # TiO2
+    2: 2.0,    # ZnO
+    3: 18.1,   # CuO
+    4: 1328.0, # MWCNTs
+    5: 2.65,   # Ag
+    6: 26.0,   # CeO2
+    7: 14.2,   # Iron Oxide
+    # 8: 3.9,  # SiO2 removed because no SiO2 with hamakers
+    # Originally reported at 7, but found it at 15.4 at 100Hz in Preparation and
+    # dielectric property of sintered monoclinic hydroxyapatite.
+    8: 15.4,   # nHAP
+    # Toshiyuki Ikoma, Atsushi Yamazaki, Satoshi Nakamura, Masaru Akao
+    # nBiochar Dielectric properties and microwave heating of oil palm biomass
+    # and biochar
+    9: 2.9,    # biochar
+    # http://scholar.lib.vt.edu/theses/available/etd-04262005-181042/unrestricted/Ch2Theory.pdf
+    10: 10.0,  # CdSe
+}
+
 
 def relPermittivity(row):
-    if (row['NMId'] == 0):  # C60
-        relPermVal = 4.4
-    elif (row['NMId'] == 1):  # TiO2
-        relPermVal = 110
-    elif (row['NMId'] == 2):  # ZnO
-        relPermVal = 2
-    elif (row['NMId'] == 3):  # CuO
-        relPermVal = 18.1
-    elif (row['NMId'] == 4):  # MWCNTs
-        relPermVal = 1328
-    elif (row['NMId'] == 5):  # Ag
-        relPermVal = 2.65
-    elif (row['NMId'] == 6):  # CeO2
-        relPermVal = 26
-    elif (row['NMId'] == 7):  # Iron Oxide
-        relPermVal = 14.2
-        # elif (row['NMId'] == 8):  # SiO2 # removed because no SiO2 with hamakers
-        #     relPermVal = 3.9
-    elif (row['NMId'] == 8):  # nHAP
-        relPermVal = 15.4  # originally reported at 7, but found it at 15.4 at 100Hz in Preparation and dielectric
-        # property of sintered monoclinic hydroxyapatite
-    # Toshiyuki Ikoma, Atsushi Yamazaki, Satoshi Nakamura, Masaru Akao
-    elif (row['NMId'] == 9):  # nBiochar Dielectric properties and microwave heating of oil palm biomass and biochar
-        relPermVal = 2.9
-    elif (row[
-              'NMId'] == 10):  # CdSe http://scholar.lib.vt.edu/theses/available/etd-04262005-181042/unrestricted
-        # /Ch2Theory.pdf
-        relPermVal = 10
-    else:
-        relPermVal = 10
-    return float(relPermVal)
+    return _REL_PERMITTIVITIES.get(row['NMId'], 10.0)
 
 
 def changEta0(row):
@@ -183,24 +170,23 @@ def londonForce(row):
 
 
 def zetaRatioKnockout(row):
+    # TODO(peterthenelson) I doubt modifying the row itself is intended.
     if row.N_z < 0:
         row.N_z = 0
-    else:
-        row.N_z = row.N_z
-    return (row.N_z)
+    return row.N_z
 
 
-def heldout_score(clf, X_test, y_test):
-    """compute deviance scores on ``X_test`` and ``y_test``. """
-    clf.fit(X_test, y_test)
-    score = np.zeros((n_estimators,), dtype=np.float64)
-    for i, y_pred in enumerate(clf.staged_decision_function(X_test)):
-        score[i] = clf.loss_(y_test, y_pred)
-    return score
+# TODO(peterthenelson): I think this is unused and can be deleted
+# def heldout_score(clf, X_test, y_test):
+#    """compute deviance scores on ``X_test`` and ``y_test``. """
+#    clf.fit(X_test, y_test)
+#    score = np.zeros((n_estimators,), dtype=np.float64)
+#    for i, y_pred in enumerate(clf.staged_decision_function(X_test)):
+#        score[i] = clf.loss_(y_test, y_pred)
+#    return score
 
 
 def porosityHappel(row):
-    import math
     p = float(row.Poros)
     gam = (1 - p) ** (.333333333)
     numerator = 2 * (1 - gam ** 5)
@@ -226,24 +212,26 @@ def rulesGradientBoost(clf, features, labels, node_index=0):
         The names of the features and labels, respectively.
 
     """
-    import ast
-    from decimal import Decimal
 
     node = {}
     if clf.tree_.children_left[node_index] == -1:  # indicates leaf
         count_labels = zip(clf.tree_.value[node_index, 0], labels)
         samples = clf.tree_.n_node_samples[node_index]
-        impurity = round(clf.tree_.impurity[node_index],2)
+        impurity = round(clf.tree_.impurity[node_index], 2)
 
-        node['name'] = ', '.join(('{} '.format(count, label) for count, label in count_labels))
-        if  Decimal(node['name']) < 0 :
+        # TODO(peterthenelson) Is it intended to ignore the label in output?
+        node['name'] = ', '.join('{} '.format(count)
+                                 for count, _ in count_labels)
+        if  Decimal(node['name']) < 0:
             print ast.literal_eval(node['name'])
 
-            node['name'] = '{}, nonexponential'.format(round(Decimal(node['name']),2)) #'nonexponential'
+            node['name'] = '{}, nonexponential'.format(
+                round(Decimal(node['name']), 2)) #'nonexponential'
 
         else:
             # node['name'] = 'exponential'
-            node['name'] = '{}, exponential'.format(round(Decimal(node['name']),2))
+            node['name'] = '{}, exponential'.format(
+                round(Decimal(node['name']), 2))
         node['samples'] = samples
         node['impurity'] = "{}".format(impurity)
         # node['samples'] = ', '.join('{}'.format(samples))
@@ -281,16 +269,13 @@ def rules(clf, features, labels, node_index=0):
         The names of the features and labels, respectively.
 
     """
-    import ast
-    from decimal import Decimal
-
     node = {}
 
     if clf.tree_.children_left[node_index] == -1:  # indicates leaf
         count_labels = zip(clf.tree_.value[node_index, 0], labels)
         samplesTerminal = clf.tree_.n_node_samples[node_index]
 
-        impurity = round(clf.tree_.impurity[node_index],3)
+        impurity = round(clf.tree_.impurity[node_index], 3)
 
         node['name'] = ', '.join(('{} {}'.format('%.2f' % Decimal(count), label)
                                   for count, label in count_labels))
@@ -314,82 +299,56 @@ def rules(clf, features, labels, node_index=0):
                             rules(clf, features, labels, left_index)]
     return node
 
+_NMID_CLASSES = [
+    "C60",     # 0
+    "TiO2",    # 1
+    "ZnO",     # 2
+    "CuO",     # 3
+    "MWCNT",   # 4
+    "Ag",      # 5
+    "CeO",     # 6
+    "FeOx",    # 7
+    "HAP",     # 8
+    "Biochar", # 9
+    "QD",      # 10
+]
+
 def NMIDClassAssign(row):
-    if row.NMId == 0:
-        a = "C60"
-    elif row.NMId == 1:
-        a = "TiO2"
-    elif row.NMId == 2:
-        a = "ZnO"
-    elif row.NMId == 3:
-        a = "CuO"
-    elif row.NMId == 4:
-        a = "MWCNT"
-    elif row.NMId == 5:
-        a = "Ag"
-    elif row.NMId == 6:
-        a = "CeO"
-    elif row.NMId == 7:
-        a = "FeOx"
-    elif row.NMId == 8:
-        a = "HAP"
-    elif row.NMId == 9:
-        a = "Biochar"
-    elif row.NMId == 10:
-        a = "QD"
-    # print a
-    return a
+    return _NMID_CLASSES[row.NMId]
+
+_SALT_CLASSES = [
+    "NaCl",   # 0
+    "CaCl2",  # 1
+    "KCl",    # 2
+    "None",   # 3
+    "KNO3",   # 4
+    "NaHCO3", # 5
+]
 
 def SaltClassAssign(row):
-    if row.SaltType == 0:
-        a = "NaCl"
-    elif row.SaltType == 1:
-        a = "CaCl2"
-    elif row.SaltType == 2:
-        a = "KCl"
-    elif row.SaltType == 3:
-        a = "None"
-    elif row.SaltType == 4:
-        a = "KNO3"
-    elif row.SaltType == 5:
-        a = "NaHCO3"
-    return a
+    return _SALT_CLASSES[row.SaltType]
+
+_COATING_CLASSES = ["None", "IronOxide", "FeOOH"]
 
 def CoatingClassAssign(row):
-    if row.Coating == 0:
-        a = "None"
-    elif row.Coating == 1:
-        a = "IronOxide"
-    elif row.Coating == 2:
-        a = "FeOOH"
-    return a
+    return _COATING_CLASSES[row.Coating]
+
+_NOM_CLASSES = [
+    "None",   # 0
+    "SRHA",   # 1
+    "Alg",    # 2
+    "TRIZMA", # 3
+    "FA",     # 4
+    "HA",     # 5
+    "Citric", # 6
+    "Oxalic", # 7
+    "Formic", # 8
+]
 
 def TypeNOMClassAssign(row):
-    if row.TypeNOM == 0:
-        a = "None"
-    elif row.TypeNOM == 1:
-        a = "SRHA"
-    elif row.TypeNOM == 2:
-        a = "Alg"
-    elif row.TypeNOM == 3:
-        a = "TRIZMA"
-    elif row.TypeNOM == 4:
-        a = "FA"
-    elif row.TypeNOM == 5:
-        a = "HA"
-    elif row.TypeNOM == 6:
-        a = "Citric"
-    elif row.TypeNOM == 7:
-        a = "Oxalic"
-    elif row.TypeNOM == 8:
-        a = "Formic"
-    # print a
-    return a
-
+    return _NOM_CLASSES[row.TypeNOM]
 
 def one_hot_dataframe(data, cols, replace=False):
-
-
     """
     Small script that shows hot to do one hot encoding
     of categorical columns in a pandas DataFrame.
@@ -404,15 +363,13 @@ def one_hot_dataframe(data, cols, replace=False):
         Returns a 3-tuple comprising the data, the vectorized data,
         and the fitted vectorizor.
     """
-    import pandas
-    import numpy
-    from sklearn.feature_extraction import DictVectorizer
     vec = DictVectorizer()
     mkdict = lambda row: dict((col, row[col]) for col in cols)
-    vecData = pandas.DataFrame(vec.fit_transform(data[cols].apply(mkdict, axis=1)).toarray())
-    vecData.columns = vec.get_feature_names()
-    vecData.index = data.index
+    vec_data = pandas.DataFrame(vec.fit_transform(
+        data[cols].apply(mkdict, axis=1)).toarray())
+    vec_data.columns = vec.get_feature_names()
+    vec_data.index = data.index
     if replace is True:
         data = data.drop(cols, axis=1)
-        data = data.join(vecData)
-    return (data, vecData, vec)
+        data = data.join(vec_data)
+    return (data, vec_data, vec)

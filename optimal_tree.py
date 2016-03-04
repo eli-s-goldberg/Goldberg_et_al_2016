@@ -32,7 +32,7 @@ from sklearn import tree
 from sklearn.externals.six import StringIO
 from sklearn.metrics import classification_report
 
-from helperFunctions import (
+from helper_functions import (
     make_dirs, binaryRPClassAssign, dimAspectRatioAssign, dimPecletNumAssign,
     attractionNumber, gravityNumber, debyeLength, massFlow, electrokinetic1,
     electrokinetic2, relPermittivity, londonForce, porosityHappel, debyeNumber,
