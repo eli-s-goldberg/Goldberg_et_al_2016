@@ -42,24 +42,24 @@ from helper_functions import (
 
 # TODO(peterthenelson) Break up into functions
 # TODO(peterthenelson) Use argparse module for flags
-def main(path='.', iterations=50, deterministic=False, 
-    stratified_holdout=True, holdout_size = 0.15, crossfolds=5):
-"""Find optimal decision tree, write output files.
+def main(path='.', database_name = ['enmTransportData.xlsx'], iterations=50, 
+    deterministic=False, stratified_holdout=True, holdout_size = 0.15, crossfolds=5):
+    """Find optimal decision tree, write output files.
 
-Parameters
-----------
-path : str
-Path to output directory.
-iterations : int
-Number of runs of fitting the model.
-deterministic : bool
-Turn off randomness (for testing).
-crossfolds : int
-Number of folds for crossvalidation.
+    Parameters
+    ----------
+    path : str
+        Path to output directory.
+    iterations : int
+        Number of runs of fitting the model.
+    deterministic : bool
+        Turn off randomness (for testing).
+    crossfolds : int
+        Number of folds for crossvalidation.
 
-"""
-    # TODO(peternelson) Is this supposed to be configurable?
-    import_names = ['enmTransportData.xlsx'] * iterations
+    """
+    import_names = database_name * iterations
+
     # Loop through all model interactions by looping through database names
     run = 0
     f1_binary_average_score_track = []
@@ -73,18 +73,18 @@ Number of folds for crossvalidation.
 
         # Identify columns that are not needed for the assessment and drop
         drop_column_list = [
-        'ProfileID',
-        'ColumnLWRatio',
-        'mbEffluent',
-        'mbRetained',
-        'mbEffluent_norm',
-        'mbRetained_norm',
-        'Dispersivity',
-        'Notes1',
-        'Notes2',
-        'Notes3',
-        'Notes4',
-        'Notes5']
+            'ProfileID',
+            'ColumnLWRatio',
+            'mbEffluent',
+            'mbRetained',
+            'mbEffluent_norm',
+            'mbRetained_norm',
+            'Dispersivity',
+            'Notes1',
+            'Notes2',
+            'Notes3',
+            'Notes4',
+            'Notes5']
 
         alpha_dataset = alpha_dataset.drop(drop_column_list, 1)
 
@@ -104,7 +104,7 @@ Number of folds for crossvalidation.
         # inputs to exponential or nonexponential.
         target_data = pd.DataFrame(
             alpha_dataset.ObsRPShape, columns=['ObsRPShape']).apply(
-            binaryRPClassAssign, axis=1)
+                binaryRPClassAssign, axis=1)
 
         # categorical feature evaluation: Step 1 create containers for
         # feature names and dataframe for uniques.
@@ -118,13 +118,13 @@ Number of folds for crossvalidation.
         # set an if statment to check what the categorical features are.
         if name == 'enmTransportData.xlsx':
             training_cat_feature_names = [
-            'NMId',
-            'SaltType',
-            'Coating',
-            'TypeNOM'
+                'NMId',
+                'SaltType',
+                'Coating',
+                'TypeNOM'
             ]
         else:  # set your own if these are not they
-        training_cat_feature_names = []
+            training_cat_feature_names = []
 
         # categorical feature evaluation: Step 3 loop through names, pull out
         # and store uniques and factorize
@@ -154,7 +154,7 @@ Number of folds for crossvalidation.
         # parameters, and then reencode to recover categorical variables.
         training_data['tempKelvin'] = 25 + 273.15
         training_data['relPermValue'] = training_data.apply(relPermittivity,
-            axis=1)
+                                                            axis=1)
         training_data['N_r'] = training_data.apply(dimAspectRatioAssign, axis=1)
         training_data['N_a'] = training_data.apply(attractionNumber, axis=1)
         training_data['N_g'] = training_data.apply(gravityNumber, axis=1)
@@ -185,15 +185,15 @@ Number of folds for crossvalidation.
         # Drop overlapping features - Combination assessment: temporary
         training_data = training_data.drop(
             ['PublicationTitle', 'relPermValue', 'PartDensity', 'PvIn', 'Poros',
-            'D_l', 'tempKelvin', 'colLength', 'colWidth', 'PartDiam',
-            'CollecDiam', 'Darcy', 'IonStr', 'SaltType', 'pH', 'PartZeta',
-            'CollecZeta', 'PartIEP', 'Hamaker'], 1)
+             'D_l', 'tempKelvin', 'colLength', 'colWidth', 'PartDiam',
+             'CollecDiam', 'Darcy', 'IonStr', 'SaltType', 'pH', 'PartZeta',
+             'CollecZeta', 'PartIEP', 'Hamaker'], 1)
 
         # More saving, post feature drop.
         target_data.to_csv(os.path.join(path, 'targetdata.csv'),
-         index=False, header=True)
+                           index=False, header=True)
         training_data.to_csv(os.path.join(path, 'trainingdata.csv'),
-           index=False, header=True)
+                             index=False, header=True)
 
         # encode the categorical variables using a one-hot scheme so they're
         # correctly considered in decision tree
@@ -211,45 +211,45 @@ Number of folds for crossvalidation.
         if stratified_holdout:
             if deterministic:
                 SSS = StratifiedShuffleSplit(y_train,
-                    n_iter=1,
-                    test_size=holdout_size,
-                    random_state=666)
+                        n_iter=1,
+                        test_size=holdout_size,
+                        random_state=666)
 
                 for train_index,test_index in SSS:
                     x_train, x_holdout = x_train[train_index],x_train[test_index]
                     y_train, y_holdout = y_train[train_index],y_train[test_index]
 
-                else: 
-                    SSS = StratifiedShuffleSplit(y_train,
+            else: 
+                SSS = StratifiedShuffleSplit(y_train,
                         n_iter=1,
                         test_size=holdout_size,
                         random_state=0)
 
-                    for train_index,test_index in SSS:
-                        x_train, x_holdout = x_train[train_index],x_train[test_index]
-                        y_train, y_holdout = y_train[train_index],y_train[test_index]
-                    else: 
-                        pass
-                        random_state = [None]
-                        if deterministic:
-                            random_state = [666]
+                for train_index,test_index in SSS:
+                    x_train, x_holdout = x_train[train_index],x_train[test_index]
+                    y_train, y_holdout = y_train[train_index],y_train[test_index]
+        else: 
+            pass
+        random_state = [None]
+        if deterministic:
+            random_state = [666]
 
         # initialize the classifier
         clf = tree.DecisionTreeClassifier()
 
         # optimize classifier by brute-force parameter investigation
         dpgrid = {'max_depth': [3,4,5],
-        'min_samples_leaf': [11,12,13],
-        'max_features': [None, 'sqrt', 'log2'],
-        'random_state': random_state
-        }
+                  'min_samples_leaf': [11,12,13],
+                  'max_features': [None, 'sqrt', 'log2'],
+                  'random_state': random_state
+                 }
 
         # investigate the best possible set of parameters using a cross
         # validation loop and the given grid. The cross-validation does not do
         # random shuffles, but the estimator does use randomness (and
         # takes random_state via dpgrid).
         grid_searcher = grid_search.GridSearchCV(estimator=clf, cv=crossfolds,
-           param_grid=dpgrid, n_jobs=-1)
+                                                 param_grid=dpgrid, n_jobs=-1)
 
         # call the grid search fit using the data
         grid_searcher.fit(x_train, y_train)
@@ -331,61 +331,61 @@ Number of folds for crossvalidation.
             with open(json_path, 'w') as outf:
                 outf.write(json.dumps(tree_rules))
 
-                dot_data = StringIO()
-                tree.export_graphviz(clf, out_file=dot_data,
-                   feature_names=grab_working_names, impurity=True,
-                   rounded=True, filled=True, label='all',
-                   leaves_parallel=True,
-                   class_names=['exponential', 'nonexponential'])
+            dot_data = StringIO()
+            tree.export_graphviz(clf, out_file=dot_data,
+                                 feature_names=grab_working_names, impurity=True,
+                                 rounded=True, filled=True, label='all',
+                                 leaves_parallel=True,
+                                 class_names=['exponential', 'nonexponential'])
 
-                graph = pydot.graph_from_dot_data(dot_data.getvalue())
-                make_dirs(os.path.join(path, 'output/trees/tree'))
-                graph.write_pdf(
-                    os.path.join(path, 'output/trees/tree/%d.pdf' % (run+1)))
-                class_report_dir = os.path.join(
-                    path, 'figures', 'decisionTreeVisualization', 'class_reports')
-                make_dirs(class_report_dir)
-                class_report_path = os.path.join(class_report_dir,
-                   'class_report%d.txt' % (run+1))
-                with open(class_report_path, "w") as outf:
-                    outf.write(classification_report(
-                        y_holdout, y_pred, target_names=['exponential', 'nonexponential']))
-                    outf.write('\n')
+            graph = pydot.graph_from_dot_data(dot_data.getvalue())
+            make_dirs(os.path.join(path, 'output/trees/tree'))
+            graph.write_pdf(
+                os.path.join(path, 'output/trees/tree/%d.pdf' % (run+1)))
+            class_report_dir = os.path.join(
+                path, 'figures', 'decisionTreeVisualization', 'class_reports')
+            make_dirs(class_report_dir)
+            class_report_path = os.path.join(class_report_dir,
+                                             'class_report%d.txt' % (run+1))
+            with open(class_report_path, "w") as outf:
+                outf.write(classification_report(
+                    y_holdout, y_pred, target_names=['exponential', 'nonexponential']))
+                outf.write('\n')
 
 
-                else: 
-                    tree_rules = rules(clf, grab_working_names, data_target_names)
-                    with open(json_path, 'w') as outf:
-                        outf.write(json.dumps(tree_rules))
+        else: 
+            tree_rules = rules(clf, grab_working_names, data_target_names)
+            with open(json_path, 'w') as outf:
+                outf.write(json.dumps(tree_rules))
 
-                        dot_data = StringIO()
-                        tree.export_graphviz(clf, out_file=dot_data,
-                           feature_names=grab_working_names, impurity=True,
-                           rounded=True, filled=True, label='all',
-                           leaves_parallel=True,
-                           class_names=['exponential', 'nonexponential'])
+            dot_data = StringIO()
+            tree.export_graphviz(clf, out_file=dot_data,
+                                 feature_names=grab_working_names, impurity=True,
+                                 rounded=True, filled=True, label='all',
+                                 leaves_parallel=True,
+                                 class_names=['exponential', 'nonexponential'])
 
-                        graph = pydot.graph_from_dot_data(dot_data.getvalue())
-                        make_dirs(os.path.join(path, 'output/trees/tree'))
-                        graph.write_pdf(
-                            os.path.join(path, 'output/trees/tree/%d.pdf' % (run+1)))
-                        class_report_dir = os.path.join(
-                            path, 'figures', 'decisionTreeVisualization', 'class_reports')
-                        make_dirs(class_report_dir)
-                        class_report_path = os.path.join(class_report_dir,
-                           'class_report%d.txt' % (run+1))
-                        with open(class_report_path, "w") as outf:
-                            outf.write(classification_report(
-                                y_train, y_pred, target_names=['exponential', 'nonexponential']))
-                            outf.write('\n')
+            graph = pydot.graph_from_dot_data(dot_data.getvalue())
+            make_dirs(os.path.join(path, 'output/trees/tree'))
+            graph.write_pdf(
+                os.path.join(path, 'output/trees/tree/%d.pdf' % (run+1)))
+            class_report_dir = os.path.join(
+                path, 'figures', 'decisionTreeVisualization', 'class_reports')
+            make_dirs(class_report_dir)
+            class_report_path = os.path.join(class_report_dir,
+                                             'class_report%d.txt' % (run+1))
+            with open(class_report_path, "w") as outf:
+                outf.write(classification_report(
+                    y_train, y_pred, target_names=['exponential', 'nonexponential']))
+                outf.write('\n')
 
-                            report_save_path = os.path.join(
-                                path, 'figures', 'decisionTreeVisualization',
-                                'DecisiontreeScores%d.csv' % (run+1))
-                            f1_report.to_csv(report_save_path)
-                            f1_report.reset_index(inplace=True)
-                            print f1_report.describe()
-                            print "best performing decision tree index: ", f1_report['average'].argmax()
+    report_save_path = os.path.join(
+        path, 'figures', 'decisionTreeVisualization',
+        'DecisiontreeScores%d.csv' % (run+1))
+    f1_report.to_csv(report_save_path)
+    f1_report.reset_index(inplace=True)
+    print f1_report.describe()
+    print "best performing decision tree index: ", f1_report['average'].argmax()
 
 if __name__ == '__main__':  # wrap inside to prevent parallelize errors on windows.
-main()
+    main()
