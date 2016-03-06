@@ -8,6 +8,7 @@ pyparsing==1.5.7
 python-dateutil==2.4.2
 pytz==2015.7
 scikit-learn==0.17.1
+# don't forget to upgrade numpy if you get a numpy.pxd error: "sudo easy_install numpy --upgrade numpy"
 scipy==0.17.0
 six==1.10.0
 wheel==0.29.0
