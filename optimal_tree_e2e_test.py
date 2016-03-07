@@ -88,8 +88,7 @@ def update_golden():
 
 def run_pipeline(path):
     """Run the pipeline, putting output into specified directory."""
-    optimal_tree.main(
-        path=path, iterations=2, deterministic=True, stratified_holdout=False)
+    optimal_tree.main(path=path, iterations=2, deterministic=True)
 
 class OptimalTreeE2ETest(unittest.TestCase):
     """End-to-end test for optimal_tree module."""

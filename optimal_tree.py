@@ -233,8 +233,7 @@ def main(path='.', database_path=DATABASE_PATH, iterations=50,
 
         # optimize classifier by brute-force parameter investigation
         dpgrid = {'max_depth': [3, 4, 5],
-                  # TODO(peternelson) Change this back to [11, 12, 13],
-                  'min_samples_leaf': [5, 6, 7, 8, 9, 10],
+                  'min_samples_leaf': [11, 12, 13],
                   'max_features': [None, 'sqrt', 'log2'],
                   'random_state': [_SEED] if deterministic else [None]
                  }
