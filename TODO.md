@@ -18,8 +18,6 @@ TODOs
 ### Testing and Refactoring
 - Write tests for the helper functions.
 - Break up optimal_tree into functions and test them.
-- Add presubmit to precommit hook, make script so collaborators can link
-  their precommit hook to that.
 
 ### Style
 - Many style changes in py files (and their names in some cases).

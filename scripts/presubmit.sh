@@ -18,4 +18,4 @@ pylint -r n $(comm -23 <(find . -iname '*.py'|sort) \
                        <(printf '%s\n' "${dirty_files[@]}"|sort))
 
 echo Running tests...
-python scripts/run_tests.py
+scripts/run_tests.sh
