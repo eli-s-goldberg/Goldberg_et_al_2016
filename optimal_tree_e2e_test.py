@@ -16,6 +16,7 @@ import unittest
 import optimal_tree
 
 TESTDATA_PATH = os.path.join(os.path.dirname(__file__), 'testdata')
+FULL_DIFF_FORMATS = ['.csv', '.txt']
 
 def dir_eq(dircmp, recursive=True):
     """Compare two directories for equality and print out diffs.
@@ -46,6 +47,11 @@ def dir_eq(dircmp, recursive=True):
         dircmp.diff_files.sort()
         print 'Differing files :', dircmp.diff_files
         for fname in dircmp.diff_files:
+            _, ext = os.path.splitext(fname)
+            if ext.lower() not in FULL_DIFF_FORMATS:
+                print '%s: full diffs not displayed for file type %s' % (
+                    fname, ext)
+                continue
             fname1 = os.path.join(dircmp.left, fname)
             with open(fname1) as file1:
                 lines1 = file1.readlines()
@@ -84,7 +90,9 @@ class OptimalTreeE2ETest(unittest.TestCase):
 
     def test_optimal_tree(self):
         """Compare full run of optimal_tree against a golden output dir."""
-        optimal_tree.main(path=self.tmpdir, iterations=2, deterministic=True)
+        optimal_tree.main(
+            path=self.tmpdir, iterations=2, deterministic=True,
+            stratified_holdout=False)
         self.assert_dirs_equal(TESTDATA_PATH, self.tmpdir)
 
 if __name__ == '__main__':
