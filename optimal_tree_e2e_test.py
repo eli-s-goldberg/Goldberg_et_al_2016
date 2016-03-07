@@ -10,6 +10,7 @@ import filecmp
 import os
 import os.path
 import shutil
+import sys
 import tempfile
 import unittest
 
@@ -73,6 +74,23 @@ def dir_eq(dircmp, recursive=True):
             equal = dir_eq(subdir, recursive=True) and equal
     return equal
 
+def update_golden():
+    """Update the golden files in the testdata directory."""
+    confirm = raw_input('Do you really want to rebuild the golden files?\n'
+                        'Did you actually look at the diffs? (y/n): ')
+    if confirm.strip().lower() not in ['y', 'yes']:
+        return
+    print 'Deleting testdata'
+    shutil.rmtree(TESTDATA_PATH)
+    os.makedirs(TESTDATA_PATH)
+    print 'Rebuilding testdata'
+    run_pipeline(TESTDATA_PATH)
+
+def run_pipeline(path):
+    """Run the pipeline, putting output into specified directory."""
+    optimal_tree.main(
+        path=path, iterations=2, deterministic=True, stratified_holdout=False)
+
 class OptimalTreeE2ETest(unittest.TestCase):
     """End-to-end test for optimal_tree module."""
 
@@ -90,10 +108,12 @@ class OptimalTreeE2ETest(unittest.TestCase):
 
     def test_optimal_tree(self):
         """Compare full run of optimal_tree against a golden output dir."""
-        optimal_tree.main(
-            path=self.tmpdir, iterations=2, deterministic=True,
-            stratified_holdout=False)
+        run_pipeline(self.tmpdir)
         self.assert_dirs_equal(TESTDATA_PATH, self.tmpdir)
 
 if __name__ == '__main__':
-    unittest.main()
+    # Poor man's argparse
+    if '--update_golden' in sys.argv:
+        update_golden()
+    else:
+        unittest.main()
