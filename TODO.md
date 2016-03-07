@@ -13,7 +13,6 @@ TODOs
 - Figure out how to dump SVGs w/o opening a browser and using crowbar.
 
 ### Features
-- Eli wants some change in what CSVs get dumped for predictive modeling.
 - Eli also wants the classifiers to be more pluggable.
 
 ### Testing and Refactoring
@@ -23,3 +22,6 @@ TODOs
 ### Style
 - Many style changes in py files (and their names in some cases).
 - Unify docstring style (to what standard?).
+
+### Legal
+- Add a license file. BSD? MIT? Apache?
