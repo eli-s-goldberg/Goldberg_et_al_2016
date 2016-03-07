@@ -40,10 +40,18 @@ from helper_functions import (
     rules, NMIDClassAssign, SaltClassAssign, CoatingClassAssign,
     TypeNOMClassAssign, one_hot_dataframe)
 
+# Default database
+DATABASE_PATH = os.path.join(
+    os.path.dirname(__file__), 'transport_database', 'enmTransportData.xlsx')
+
+# Seed to use when running in deterministic mode.
+_SEED = 666
+
 # TODO(peterthenelson) Break up into functions
 # TODO(peterthenelson) Use argparse module for flags
-def main(path='.', database_name = ['enmTransportData.xlsx'], iterations=50, 
-    deterministic=False, stratified_holdout=True, holdout_size = 0.15, crossfolds=5):
+def main(path='.', database_path=DATABASE_PATH, iterations=50,
+         deterministic=False, stratified_holdout=True, holdout_size=0.15,
+         crossfolds=5):
     """Find optimal decision tree, write output files.
 
     Parameters
@@ -58,18 +66,15 @@ def main(path='.', database_name = ['enmTransportData.xlsx'], iterations=50,
         Number of folds for crossvalidation.
 
     """
-    import_names = database_name * iterations
+    database_basename = os.path.basename(database_path)
 
     # Loop through all model interactions by looping through database names
     run = 0
     f1_binary_average_score_track = []
     f1_report = pd.DataFrame()
-    for run, name in enumerate(import_names):
+    for run in xrange(iterations):
         print run  # Print for convenience
-
-        # import database as a function of path and iterated database name
-        alpha_dataset = pd.read_excel(os.path.join(
-            os.path.dirname(__file__), 'transport_database', name))
+        alpha_dataset = pd.read_excel(database_path)
 
         # Identify columns that are not needed for the assessment and drop
         drop_column_list = [
@@ -116,7 +121,7 @@ def main(path='.', database_name = ['enmTransportData.xlsx'], iterations=50,
         train_data_feature_inspect = training_data.copy(deep=True)
 
         # set an if statment to check what the categorical features are.
-        if name == 'enmTransportData.xlsx':
+        if database_path == DATABASE_PATH:
             training_cat_feature_names = [
                 'NMId',
                 'SaltType',
@@ -139,7 +144,7 @@ def main(path='.', database_name = ['enmTransportData.xlsx'], iterations=50,
 
         # create temporary dataframe and store names. Concat with the uniques
         # in case the database name changes.
-        tempdf2 = pd.DataFrame(columns=[name])
+        tempdf2 = pd.DataFrame(columns=[database_basename])
         training_feature_uniques = pd.concat(
             [training_feature_uniques, tempdf2], axis=1)
 
@@ -207,41 +212,31 @@ def main(path='.', database_name = ['enmTransportData.xlsx'], iterations=50,
         y_train = target_data.as_matrix()
         x_train = training_data.as_matrix()
 
-        # if you want to seperate training data into holdout set to examine performance. 
+        # if you want to seperate training data into holdout set to examine performance.
+        x_train_or_holdout = x_train
+        y_train_or_holdout = y_train
         if stratified_holdout:
-            if deterministic:
-                SSS = StratifiedShuffleSplit(y_train,
-                        n_iter=1,
-                        test_size=holdout_size,
-                        random_state=666)
+            random_state = _SEED if deterministic else None
+            sss = StratifiedShuffleSplit(
+                y_train, n_iter=1, test_size=holdout_size,
+                random_state=random_state)
 
-                for train_index,test_index in SSS:
-                    x_train, x_holdout = x_train[train_index],x_train[test_index]
-                    y_train, y_holdout = y_train[train_index],y_train[test_index]
+            for train_index, test_index in sss:
+                x_train, x_holdout = x_train[train_index], x_train[test_index]
+                y_train, y_holdout = y_train[train_index], y_train[test_index]
 
-            else: 
-                SSS = StratifiedShuffleSplit(y_train,
-                        n_iter=1,
-                        test_size=holdout_size,
-                        random_state=0)
-
-                for train_index,test_index in SSS:
-                    x_train, x_holdout = x_train[train_index],x_train[test_index]
-                    y_train, y_holdout = y_train[train_index],y_train[test_index]
-        else: 
-            pass
-        random_state = [None]
-        if deterministic:
-            random_state = [666]
+            x_train_or_holdout = x_holdout
+            y_train_or_holdout = y_holdout
 
         # initialize the classifier
         clf = tree.DecisionTreeClassifier()
 
         # optimize classifier by brute-force parameter investigation
-        dpgrid = {'max_depth': [3,4,5],
-                  'min_samples_leaf': [11,12,13],
+        dpgrid = {'max_depth': [3, 4, 5],
+                  # TODO(peternelson) Change this back to [11, 12, 13],
+                  'min_samples_leaf': [5, 6, 7, 8, 9, 10],
                   'max_features': [None, 'sqrt', 'log2'],
-                  'random_state': random_state
+                  'random_state': [_SEED] if deterministic else [None]
                  }
 
         # investigate the best possible set of parameters using a cross
@@ -262,47 +257,25 @@ def main(path='.', database_name = ['enmTransportData.xlsx'], iterations=50,
         clf = tree.DecisionTreeClassifier(**best_params)
         clf.fit(x_train, y_train)
 
-        if stratified_holdout:    
-            # Evaluate external performance (how well does 
-            # the trained model classify the holdout?)
-            y_pred = clf.predict(x_holdout)
+        # Evaluate external performance (how well does
+        # the trained model classify the holdout?)
+        y_pred = clf.predict(x_train_or_holdout)
 
-            # calculate the score for the combined class (weighted), and then
-            # each class individually
-            f1_binary_average_score = metrics.f1_score(
-                y_holdout, y_pred, pos_label=None, average='weighted')
-            f1_binary_average_score_exp = metrics.f1_score(
-                y_holdout, y_pred, pos_label=0)
-            f1_binary_average_score_nonexp = metrics.f1_score(
-                y_holdout, y_pred, pos_label=1)        
+        # calculate the score for the combined class (weighted), and then
+        # each class individually
+        f1_binary_average_score = metrics.f1_score(
+            y_train_or_holdout, y_pred, pos_label=None, average='weighted')
+        f1_binary_average_score_exp = metrics.f1_score(
+            y_train_or_holdout, y_pred, pos_label=0)
+        f1_binary_average_score_nonexp = metrics.f1_score(
+            y_train_or_holdout, y_pred, pos_label=1)
 
-            # Compare the predictions to the truth directly and outut a file
-            # to inspect.
-            y_pred_frame = pd.DataFrame(y_pred, columns=['predicted'])
-            y_truth_frame = pd.DataFrame(y_holdout, columns=['truth'])
-            comparison = pd.concat([y_pred_frame, y_truth_frame], axis=1)
-            comparison.to_csv(os.path.join(path, 'comparison.csv'))   
-
-        else: 
-            # Evaluate the performance
-            y_pred = clf.predict(x_train)
-
-            # calculate the score for the combined class (weighted), and then
-            # each class individually
-            f1_binary_average_score = metrics.f1_score(
-                y_train, y_pred, pos_label=None, average='weighted')
-            f1_binary_average_score_exp = metrics.f1_score(
-                y_train, y_pred, pos_label=0)
-            f1_binary_average_score_nonexp = metrics.f1_score(
-                y_train, y_pred, pos_label=1)        
-
-            # Compare the predictions to the truth directly and outut a file
-            # to inspect.
-            y_pred_frame = pd.DataFrame(y_pred, columns=['predicted'])
-            y_truth_frame = pd.DataFrame(y_train, columns=['truth'])
-            comparison = pd.concat([y_pred_frame, y_truth_frame], axis=1)
-            comparison.to_csv(os.path.join(path, 'comparison.csv'))   
-
+        # Compare the predictions to the truth directly and outut a file
+        # to inspect.
+        y_pred_frame = pd.DataFrame(y_pred, columns=['predicted'])
+        y_truth_frame = pd.DataFrame(y_train_or_holdout, columns=['truth'])
+        comparison = pd.concat([y_pred_frame, y_truth_frame], axis=1)
+        comparison.to_csv(os.path.join(path, 'comparison.csv'))
 
         # initialize scoring tracking dataframe to store the data
         f1_track = pd.DataFrame()
@@ -326,58 +299,30 @@ def main(path='.', database_name = ['enmTransportData.xlsx'], iterations=50,
 
         data_target_names = ['exponential', 'nonexponential']
 
-        if stratified_holdout:
-            tree_rules = rules(clf, grab_working_names, data_target_names)
-            with open(json_path, 'w') as outf:
-                outf.write(json.dumps(tree_rules))
+        tree_rules = rules(clf, grab_working_names, data_target_names)
+        with open(json_path, 'w') as outf:
+            outf.write(json.dumps(tree_rules))
 
-            dot_data = StringIO()
-            tree.export_graphviz(clf, out_file=dot_data,
-                                 feature_names=grab_working_names, impurity=True,
-                                 rounded=True, filled=True, label='all',
-                                 leaves_parallel=True,
-                                 class_names=['exponential', 'nonexponential'])
+        dot_data = StringIO()
+        tree.export_graphviz(clf, out_file=dot_data,
+                             feature_names=grab_working_names, impurity=True,
+                             rounded=True, filled=True, label='all',
+                             leaves_parallel=True,
+                             class_names=['exponential', 'nonexponential'])
 
-            graph = pydot.graph_from_dot_data(dot_data.getvalue())
-            make_dirs(os.path.join(path, 'output/trees/tree'))
-            graph.write_pdf(
-                os.path.join(path, 'output/trees/tree/%d.pdf' % (run+1)))
-            class_report_dir = os.path.join(
-                path, 'figures', 'decisionTreeVisualization', 'class_reports')
-            make_dirs(class_report_dir)
-            class_report_path = os.path.join(class_report_dir,
-                                             'class_report%d.txt' % (run+1))
-            with open(class_report_path, "w") as outf:
-                outf.write(classification_report(
-                    y_holdout, y_pred, target_names=['exponential', 'nonexponential']))
-                outf.write('\n')
-
-
-        else: 
-            tree_rules = rules(clf, grab_working_names, data_target_names)
-            with open(json_path, 'w') as outf:
-                outf.write(json.dumps(tree_rules))
-
-            dot_data = StringIO()
-            tree.export_graphviz(clf, out_file=dot_data,
-                                 feature_names=grab_working_names, impurity=True,
-                                 rounded=True, filled=True, label='all',
-                                 leaves_parallel=True,
-                                 class_names=['exponential', 'nonexponential'])
-
-            graph = pydot.graph_from_dot_data(dot_data.getvalue())
-            make_dirs(os.path.join(path, 'output/trees/tree'))
-            graph.write_pdf(
-                os.path.join(path, 'output/trees/tree/%d.pdf' % (run+1)))
-            class_report_dir = os.path.join(
-                path, 'figures', 'decisionTreeVisualization', 'class_reports')
-            make_dirs(class_report_dir)
-            class_report_path = os.path.join(class_report_dir,
-                                             'class_report%d.txt' % (run+1))
-            with open(class_report_path, "w") as outf:
-                outf.write(classification_report(
-                    y_train, y_pred, target_names=['exponential', 'nonexponential']))
-                outf.write('\n')
+        graph = pydot.graph_from_dot_data(dot_data.getvalue())
+        make_dirs(os.path.join(path, 'output/trees/tree'))
+        graph.write_pdf(
+            os.path.join(path, 'output/trees/tree/%d.pdf' % (run+1)))
+        class_report_dir = os.path.join(
+            path, 'figures', 'decisionTreeVisualization', 'class_reports')
+        make_dirs(class_report_dir)
+        class_report_path = os.path.join(class_report_dir,
+                                         'class_report%d.txt' % (run+1))
+        with open(class_report_path, "w") as outf:
+            outf.write(classification_report(
+                y_train_or_holdout, y_pred, target_names=['exponential', 'nonexponential']))
+            outf.write('\n')
 
     report_save_path = os.path.join(
         path, 'figures', 'decisionTreeVisualization',
