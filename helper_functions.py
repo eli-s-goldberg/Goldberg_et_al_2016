@@ -8,6 +8,9 @@ import os
 import pandas
 from sklearn.feature_extraction import DictVectorizer
 
+# TODO(peterthenelson) Add docstrings.
+# pylint: disable=missing-docstring
+
 def make_dirs(path):
     """Recursively make directories, ignoring when they already exist.
 
@@ -19,44 +22,44 @@ def make_dirs(path):
         if exc.errno != errno.EEXIST or not os.path.isdir(path):
             raise
 
-def binaryRPClassAssign(row):
+def binary_rp_class_assign(row):
     if row.ObsRPShape in ["EXP", "HE"]:
         return 0
     else:
         return 1
 
-def binaryRPClassAssignLabels(row):
+def binary_rp_class_assign_labels(row):
     if row.ObsRPShape in ["EXP", "HE"]:
         return "exponential"
     else:
         return "nonexponential"
 
-def dimAspectRatioAssign(row):
+def dim_aspect_ratio_assign(row):
     return float(row.PartDiam / row.CollecDiam)
 
-def dimPecletNumAssign(row):
-    bolzConstant = float(1.3806504 * 10 ** -23)
-    tempK = 25 + 273.15
-    diffusionCoef = float(bolzConstant * tempK / (3 * math.pi * 8.94e-4 * row.PartDiam))
-    return float(row.Darcy * row.CollecDiam / diffusionCoef)
+def dim_peclet_num_assign(row):
+    bolz_constant = float(1.3806504 * 10 ** -23)
+    temp_k = 25 + 273.15
+    diffusion_coef = float(bolz_constant * temp_k / (3 * math.pi * 8.94e-4 * row.PartDiam))
+    return float(row.Darcy * row.CollecDiam / diffusion_coef)
 
 
-def gravitationalNumber(row):
+def gravitational_number(row):
     p_radius = float((row.PartDiam) / 2)
-    bolzConstant = float(1.3806504 * 10 ** -23)
-    tempK = 25 + 273.15
+    bolz_constant = float(1.3806504 * 10 ** -23)
+    temp_k = 25 + 273.15
     # TODO(peterthenelson) 4/3 is a bug (==> 1, not 1.3...).
     return float((4/3) * math.pi * (p_radius**4) * (row.PartDensity-1000) *
-                 9.81 / (bolzConstant * tempK))
+                 9.81 / (bolz_constant * temp_k))
 
 
-def attractionNumber(row):
+def attraction_number(row):
     p_radius = float((row.PartDiam) / 2)
     denominator = 12 * math.pi * p_radius ** 2 * row.Darcy
     return float(row.Hamaker / denominator)
 
 
-def gravityNumber(row):
+def gravity_number(row):
     temp = row.tempKelvin
     abs_visc = float(math.exp(-3.7188 + (578.919 / (-137.546 + temp))))
     p_radius = float((row.PartDiam) / 2)
@@ -65,59 +68,59 @@ def gravityNumber(row):
     return float(numerator / demoninator)
 
 
-def debyeLength(row):
-    permFreeSpace = float(8.854 * 10 ** -12)
-    bolzConstant = float(1.3806504 * 10 ** -23)
-    elecCharge = float(1.602176466 * 10 ** -19)
-    numAvagadro = float(6.02 * 10 ** 23)
+def debye_length(row):
+    perm_free_space = float(8.854 * 10 ** -12)
+    bolz_constant = float(1.3806504 * 10 ** -23)
+    elec_charge = float(1.602176466 * 10 ** -19)
+    num_avagadro = float(6.02 * 10 ** 23)
     if row['SaltType'] == 3:
-        ionStr1 = float(1 * 10 ** (float(row['pH']) - 14))
-        ionStr2 = float(1 * 10 ** (-1 * float(row['pH'])))
-        ZiCi = float(1 ** 2 * ionStr1 + 1 ** 2 * ionStr2)
-        return float((1 / (float((numAvagadro * elecCharge ** 2 / (
-            permFreeSpace * float(row['relPermValue']) * bolzConstant *
-            float(row['tempKelvin'])) * ZiCi) ** 0.5))))
+        ion_str1 = float(1 * 10 ** (float(row['pH']) - 14))
+        ion_str2 = float(1 * 10 ** (-1 * float(row['pH'])))
+        zi_ci = float(1 ** 2 * ion_str1 + 1 ** 2 * ion_str2)
+        return float((1 / (float((num_avagadro * elec_charge ** 2 / (
+            perm_free_space * float(row['relPermValue']) * bolz_constant *
+            float(row['tempKelvin'])) * zi_ci) ** 0.5))))
     elif row['SaltType'] == 1:
-        ZiCi = float(2 ** 2 * float(row['IonStr']) + 1 ** 2 * 2 *
-                     float(row['IonStr']))
-        return float((1 / (float((numAvagadro * elecCharge ** 2 / (
-            permFreeSpace * float(row['relPermValue']) * bolzConstant *
-            float(row['tempKelvin'])) * ZiCi) ** 0.5))))
+        zi_ci = float(2 ** 2 * float(row['IonStr']) + 1 ** 2 * 2 *
+                      float(row['IonStr']))
+        return float((1 / (float((num_avagadro * elec_charge ** 2 / (
+            perm_free_space * float(row['relPermValue']) * bolz_constant *
+            float(row['tempKelvin'])) * zi_ci) ** 0.5))))
     elif row['IonStr'] == 0:
         return 1000e-9  # about 1um
     else:
-        ZiCi = float(1 ** 2 * float(row['IonStr']) + 1 ** 2 *
-                     float(row['IonStr']))
-        return float((1 / (float((numAvagadro * elecCharge ** 2 / (
-            permFreeSpace * float(row['relPermValue']) * bolzConstant *
-            float(row['tempKelvin'])) * ZiCi) ** 0.5))))
+        zi_ci = float(1 ** 2 * float(row['IonStr']) + 1 ** 2 *
+                      float(row['IonStr']))
+        return float((1 / (float((num_avagadro * elec_charge ** 2 / (
+            perm_free_space * float(row['relPermValue']) * bolz_constant *
+            float(row['tempKelvin'])) * zi_ci) ** 0.5))))
 
 
-def massFlow(row):
-    L = row.colLength
-    W = row.colWidth
-    A = float(math.pi / 4 * row.colWidth ** 2)
+def mass_flow(row):
+    l = row.colLength
+    w = row.colWidth
+    a = float(math.pi / 4 * row.colWidth ** 2)
     p = row.Poros
-    PVs = row.PvIn
-    return float(L * W * A * p * PVs)
+    p_vs = row.PvIn
+    return float(l * w * a * p * p_vs)
 
 
 def electrokinetic1(row):
     v = 7.83e-9  # dialectric constant of water at 25C in coulombs/volt/m
     a = row.PartDiam / 2  # particle radius
-    Zp = row.PartZeta / 1e3  # particle zeta potential
-    Zc = row.CollecZeta / 1e3  # collector zeta potential
+    zp = row.PartZeta / 1e3  # particle zeta potential
+    zc = row.CollecZeta / 1e3  # collector zeta potential
     k = float(1.3806504 * 10 ** -23)  # boltzmann constant
-    T = row.tempKelvin  # temperature
+    t = row.tempKelvin  # temperature
 
-    return float(v * a * (Zp ** 2 + Zc ** 2) / (4 * k * T))
+    return float(v * a * (zp ** 2 + zc ** 2) / (4 * k * t))
 
 
 def electrokinetic2(row):
-    Zp = row.PartZeta / 1e3  # particle zeta potential
-    Zc = row.CollecZeta / 1e3  # collector zeta potential
-    numerator = 2 * (Zp / Zc)
-    denominator = 1 + (Zp / Zc) ** 2
+    zp = row.PartZeta / 1e3  # particle zeta potential
+    zc = row.CollecZeta / 1e3  # collector zeta potential
+    numerator = 2 * (zp / zc)
+    denominator = 1 + (zp / zc) ** 2
     return float(numerator / denominator)
 
 _REL_PERMITTIVITIES = {
@@ -142,34 +145,34 @@ _REL_PERMITTIVITIES = {
 }
 
 
-def relPermittivity(row):
+def rel_permittivity(row):
     return _REL_PERMITTIVITIES.get(row['NMId'], 10.0)
 
 
-def changEta0(row):
-    N_Dl = row.N_Dl
-    N_Z1 = row.N_Z1
-    N_Z2 = row.N_Z2
-    N_Lo = row.N_Lo
-    N_as = row.N_as
-    N_r = row.N_r
-    N_Pe = row.N_Pe
-    N_g = row.N_g
+def chang_eta0(row):
+    n_dl = row.N_Dl
+    n_z1 = row.N_Z1
+    n_z2 = row.N_Z2
+    n_lo = row.N_Lo
+    n_as = row.N_as
+    n_r = row.N_r
+    n_pe = row.N_Pe
+    n_g = row.N_g
 
-    return float(0.024 * N_Dl ** (0.969) * N_Z1 ** (-0.423) * N_Z2 ** (2.880) * N_Lo ** 1.5 + \
-                 3.176 * N_as ** (0.333) * N_r ** (-0.081) * N_Pe ** (-0.715) * N_Lo ** (2.687) + \
-                 0.222 * N_as * N_r ** (3.041) * N_Pe ** (-0.514) * N_Lo ** (0.125) + \
-                 N_r ** (-0.24) * N_g ** (1.11) * N_Lo)
+    return float(0.024 * n_dl ** (0.969) * n_z1 ** (-0.423) * n_z2 ** (2.880) * n_lo ** 1.5 + \
+                 3.176 * n_as ** (0.333) * n_r ** (-0.081) * n_pe ** (-0.715) * n_lo ** (2.687) + \
+                 0.222 * n_as * n_r ** (3.041) * n_pe ** (-0.514) * n_lo ** (0.125) + \
+                 n_r ** (-0.24) * n_g ** (1.11) * n_lo)
 
 
-def londonForce(row):
+def london_force(row):
     k = float(1.3806504 * 10 ** -23)
-    T = row.tempKelvin
-    A = row.Hamaker
-    return float(A / (6 * k * T))
+    t = row.tempKelvin
+    a = row.Hamaker
+    return float(a / (6 * k * t))
 
 
-def zetaRatioKnockout(row):
+def zeta_ratio_knockout(row):
     # TODO(peterthenelson) I doubt modifying the row itself is intended.
     if row.N_z < 0:
         row.N_z = 0
@@ -186,7 +189,7 @@ def zetaRatioKnockout(row):
 #    return score
 
 
-def porosityHappel(row):
+def porosity_happel(row):
     p = float(row.Poros)
     gam = (1 - p) ** (.333333333)
     numerator = 2 * (1 - gam ** 5)
@@ -194,12 +197,12 @@ def porosityHappel(row):
     return float(numerator / denominator)
 
 
-def debyeNumber(row):
-    D = row.D_l
+def debye_number(row):
+    d = row.D_l
     dp = row.PartDiam
-    return float(dp / D)
+    return float(dp / d)
 
-def rulesGradientBoost(clf, features, labels, node_index=0):
+def rules_gradient_boost(clf, features, labels, node_index=0):
 
     """Structure of rules in a fit decision tree classifier
 
@@ -273,7 +276,7 @@ def rules(clf, features, labels, node_index=0):
 
     if clf.tree_.children_left[node_index] == -1:  # indicates leaf
         count_labels = zip(clf.tree_.value[node_index, 0], labels)
-        samplesTerminal = clf.tree_.n_node_samples[node_index]
+        samples_terminal = clf.tree_.n_node_samples[node_index]
 
         impurity = round(clf.tree_.impurity[node_index], 3)
 
@@ -281,7 +284,7 @@ def rules(clf, features, labels, node_index=0):
                                   for count, label in count_labels))
 
         node['impurity'] = "{}".format(impurity)
-        node['samples'] = "{}".format(samplesTerminal)
+        node['samples'] = "{}".format(samples_terminal)
         # print node['samples']
 
     else:
@@ -313,7 +316,7 @@ _NMID_CLASSES = [
     "QD",      # 10
 ]
 
-def NMIDClassAssign(row):
+def nmid_class_assign(row):
     return _NMID_CLASSES[row.NMId]
 
 _SALT_CLASSES = [
@@ -325,12 +328,12 @@ _SALT_CLASSES = [
     "NaHCO3", # 5
 ]
 
-def SaltClassAssign(row):
+def salt_class_assign(row):
     return _SALT_CLASSES[row.SaltType]
 
 _COATING_CLASSES = ["None", "IronOxide", "FeOOH"]
 
-def CoatingClassAssign(row):
+def coating_class_assign(row):
     return _COATING_CLASSES[row.Coating]
 
 _NOM_CLASSES = [
@@ -345,7 +348,7 @@ _NOM_CLASSES = [
     "Formic", # 8
 ]
 
-def TypeNOMClassAssign(row):
+def type_nom_class_assign(row):
     return _NOM_CLASSES[row.TypeNOM]
 
 def one_hot_dataframe(data, cols, replace=False):

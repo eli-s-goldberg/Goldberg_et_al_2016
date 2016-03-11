@@ -37,7 +37,7 @@ class pc2dmpc:
 
     :parameter
     dataframe :
-    tempK :
+    temp_k :
     diameter_particle :
     diameter_grain :
     darcy_velocity :
@@ -72,7 +72,7 @@ class pc2dmpc:
     def __init__(self,
                  dataframe,
                  enm_identity='enm_identity',
-                 tempK='tempK',
+                 temp_k='tempK',
                  diameter_particle='diameter_particle',
                  diameter_grain='diameter_grain',
                  darcy_velocity='darcy_velocity',
@@ -97,7 +97,7 @@ class pc2dmpc:
 
         self.dataframe = dataframe
         self.enm_identity = enm_identity
-        self.tempK = tempK
+        self.temp_k = temp_k
         self.diameter_particle = diameter_particle
         self.diameter_grain = diameter_grain
         self.darcy_velocity = darcy_velocity
@@ -152,9 +152,9 @@ class pc2dmpc:
 
         dataframe = self.dataframe
 
-        def dimPecletNumAssign(row):
+        def dim_peclet_num_assign(row):
             boltzmann_constant = float(1.3806504 * 10 ** -23)
-            temp_K = row[self.tempK]
+            temp_K = row[self.temp_k]
             diam_part = row[self.diameter_particle]
             grain_diam = row[self.diameter_grain]
             darcy_vel = row[self.darcy_velocity]
@@ -163,7 +163,7 @@ class pc2dmpc:
                                                           (3 * math.pi * kin_visc_water * diam_part))
             return float(darcy_vel * grain_diam / stokes_einstein_diffusion_coefficient)
 
-        return dataframe.apply(dimPecletNumAssign, 1)
+        return dataframe.apply(dim_peclet_num_assign, 1)
 
     def get_gravity_number(self):
         '''
@@ -175,9 +175,9 @@ class pc2dmpc:
         dataframe = self.dataframe
 
         if self.calculate_kin_visc_by_temp == False:
-            def gravityNumber(row):
+            def gravity_number(row):
                 density_water = 1000
-                temp_K = row[self.tempK]
+                temp_K = row[self.temp_k]
                 darcy_vel = row[self.darcy_velocity]
                 radius_part = row[self.diameter_particle] / 2
                 kin_visc = row[self.kinematic_water_viscosity]
@@ -189,12 +189,12 @@ class pc2dmpc:
 
         else:
 
-            def gravityNumber(row):
+            def gravity_number(row):
                 A = float(-3.7188)
                 B = float(578.919)
                 C = float(-137.546)
                 density_water = 1000
-                temp_K = row[self.tempK]
+                temp_K = row[self.temp_k]
                 darcy_vel = row[self.darcy_velocity]
                 radius_part = row[self.diameter_particle] / 2
                 kin_visc = float(math.exp(A + (B / (C + temp_K))))
@@ -204,7 +204,7 @@ class pc2dmpc:
                 demoninator = 8 * kin_visc * darcy_vel
                 return float(numerator / demoninator)
 
-        return dataframe.apply(gravityNumber, 1)
+        return dataframe.apply(gravity_number, 1)
 
     def get_attractive_number(self):
         '''
@@ -217,7 +217,7 @@ class pc2dmpc:
 
         dataframe = self.dataframe
 
-        def attractionNumber(row):
+        def attraction_number(row):
             radius_part = row[self.diameter_particle] / 2
             darcy_vel = row[self.darcy_velocity]
             ham_constant = row[self.hamaker_constant]
@@ -225,7 +225,7 @@ class pc2dmpc:
             denominator = 12 * math.pi * radius_part ** 2 * darcy_vel
             return float(darcy_vel / denominator)
 
-        return dataframe.apply(attractionNumber, 1)
+        return dataframe.apply(attraction_number, 1)
 
     def get_particle_pumped_mass(self):
         '''
@@ -240,7 +240,7 @@ class pc2dmpc:
 
         dataframe = self.dataframe
 
-        def massFlow(row):
+        def mass_flow(row):
             col_len = row[self.column_length]
             col_id = row[self.column_inner_diameter]
             med_porosity = row[self.media_porosity]
@@ -250,7 +250,7 @@ class pc2dmpc:
 
             return float(col_len * col_id * col_xsn_area * med_porosity * inf_pore_vols)
 
-        return dataframe.apply(massFlow, 1)
+        return dataframe.apply(mass_flow, 1)
 
     def get_electrokinetic_1(self):
         '''
@@ -268,7 +268,7 @@ class pc2dmpc:
             dialectric_constant_water = 7.83e-9  # dialectric constant of water at 25C in coulombs/volt/m
             radius_part = row[self.diameter_particle] / 2
             boltzmann_constant = float(1.3806504 * 10 ** -23)
-            temp_K = row[self.tempK]
+            temp_K = row[self.temp_k]
             part_zeta = row[self.particle_zeta_potential] / 1e3
             grain_zeta = row[self.grain_zeta_potential] / 1e3
 
@@ -339,14 +339,14 @@ class pc2dmpc:
         '''
         dataframe = self.dataframe
 
-        def londonForce(row):
+        def london_force(row):
             boltzmann_constant = float(1.3806504 * 10 ** -23)
-            temp_K = row[self.tempK]
+            temp_K = row[self.temp_k]
             ham_constant = row[self.hamaker_constant]
 
             return float(ham_constant / (6 * boltzmann_constant * temp_K))
 
-        return dataframe.apply(londonForce, 1)
+        return dataframe.apply(london_force, 1)
 
     def get_happel_porosity_parameter(self):
         '''
@@ -359,7 +359,7 @@ class pc2dmpc:
 
         dataframe = self.dataframe
 
-        def porosityHappel(row):
+        def porosity_happel(row):
             med_porosity = row[self.media_porosity]
 
             gam = (1 - med_porosity) ** (.333333333)
@@ -367,7 +367,7 @@ class pc2dmpc:
             denominator = 2 - 3 * gam + 3 * gam ** 5 - 2 * gam ** 6
             return float(numerator / denominator)
 
-        return dataframe.apply(porosityHappel, 1)
+        return dataframe.apply(porosity_happel, 1)
 
     def get_ionic_strength(self):
 
@@ -455,7 +455,7 @@ def main():
 
     a = pc2dmpc(
         dataframe=df,
-        tempK='tempK',
+        temp_k='tempK',
         diameter_particle='diameter_particle',
         diameter_grain='diameter_grain',
         darcy_velocity='darcy_velocity',
