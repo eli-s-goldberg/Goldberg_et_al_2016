@@ -103,7 +103,7 @@ if __name__ == '__main__':  # wrap inside to prevent parallelize errors on windo
 
         # Set the target data, copy into a new database and binarize inputs to exponential or nonexponential.
         targetData = pd.DataFrame(alphaDataset.ObsRPShape, columns=['ObsRPShape'])
-        targetData = targetData.apply(binaryRPClassAssignPlotClass, axis=1)
+        targetData = targetData.apply(binary_rp_class_assignPlotClass, axis=1)
 
         # categorical feature evaluation: Step 1 create containers for feature names and dataframe for uniques.
         trainingCatFeatureNames = []
@@ -144,17 +144,17 @@ if __name__ == '__main__':  # wrap inside to prevent parallelize errors on windo
         # requires that we factorize, then apply and conform to dimensionless paramters, and then reencode to
         # recover categorical variables.
         trainingData['tempKelvin'] = 25 + 273.15
-        trainingData['relPermValue'] = trainingData.apply(relPermittivity, axis=1)
-        trainingData['N_r'] = trainingData.apply(dimAspectRatioAssign, axis=1)
-        trainingData['N_a'] = trainingData.apply(attractionNumber, axis=1)
-        trainingData['N_g'] = trainingData.apply(gravityNumber, axis=1)
-        trainingData['N_Pe'] = trainingData.apply(dimPecletNumAssign, axis=1)
-        trainingData['N_Lo'] = trainingData.apply(londonForce, axis=1)
-        trainingData['D_l'] = trainingData.apply(debyeLength, axis=1)
-        trainingData['N_Dl'] = trainingData.apply(debyeNumber, axis=1)
-        trainingData['M_inj'] = trainingData.apply(massFlow, axis=1)
+        trainingData['relPermValue'] = trainingData.apply(rel_permittivity, axis=1)
+        trainingData['N_r'] = trainingData.apply(dim_aspect_ratio_assign, axis=1)
+        trainingData['N_a'] = trainingData.apply(attraction_number, axis=1)
+        trainingData['N_g'] = trainingData.apply(gravity_number, axis=1)
+        trainingData['N_Pe'] = trainingData.apply(dim_peclet_num_assign, axis=1)
+        trainingData['N_Lo'] = trainingData.apply(london_force, axis=1)
+        trainingData['D_l'] = trainingData.apply(debye_length, axis=1)
+        trainingData['N_Dl'] = trainingData.apply(debye_number, axis=1)
+        trainingData['M_inj'] = trainingData.apply(mass_flow, axis=1)
         trainingData['M_inj'] = 1e6 * trainingData['M_inj']  # in mg
-        trainingData['N_as'] = trainingData.apply(porosityHappel, axis=1)
+        trainingData['N_as'] = trainingData.apply(porosity_happel, axis=1)
         trainingData['N_Z1'] = trainingData.apply(electrokinetic1, axis=1)
         trainingData['N_Z2'] = trainingData.apply(electrokinetic2, axis=1)
         trainingData['N_CA'] = trainingData['colLength'] / trainingData['colWidth']
@@ -162,10 +162,10 @@ if __name__ == '__main__':  # wrap inside to prevent parallelize errors on windo
         trainingData['ConcHA'] = 1e3 * trainingData['ConcHA']  # in mg/L
 
         # put back categorical data encodes (see note above)
-        trainingData['NMId'] = trainingData.apply(NMIDClassAssign, axis=1)
-        trainingData['SaltType'] = trainingData.apply(SaltClassAssign, axis=1)
-        trainingData['Coating'] = trainingData.apply(CoatingClassAssign, axis=1)
-        trainingData['TypeNOM'] = trainingData.apply(TypeNOMClassAssign, axis=1)
+        trainingData['NMId'] = trainingData.apply(nmid_class_assign, axis=1)
+        trainingData['SaltType'] = trainingData.apply(salt_class_assign, axis=1)
+        trainingData['Coating'] = trainingData.apply(coating_class_assign, axis=1)
+        trainingData['TypeNOM'] = trainingData.apply(type_nom_class_assign, axis=1)
 
         # Output a final copy of the training data for later use
         trainingData.to_csv('./trainingdataAll.csv', index=False, header=True)

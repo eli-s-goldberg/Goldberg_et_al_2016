@@ -34,11 +34,11 @@ from sklearn.metrics import classification_report
 from sklearn.cross_validation import StratifiedShuffleSplit
 
 from helper_functions import (
-    make_dirs, binaryRPClassAssign, dimAspectRatioAssign, dimPecletNumAssign,
-    attractionNumber, gravityNumber, debyeLength, massFlow, electrokinetic1,
-    electrokinetic2, relPermittivity, londonForce, porosityHappel, debyeNumber,
-    rules, NMIDClassAssign, SaltClassAssign, CoatingClassAssign,
-    TypeNOMClassAssign, one_hot_dataframe)
+    make_dirs, binary_rp_class_assign, dim_aspect_ratio_assign, dim_peclet_num_assign,
+    attraction_number, gravity_number, debye_length, mass_flow, electrokinetic1,
+    electrokinetic2, rel_permittivity, london_force, porosity_happel, debye_number,
+    rules, nmid_class_assign, salt_class_assign, coating_class_assign,
+    type_nom_class_assign, one_hot_dataframe)
 
 # Default database
 DATABASE_PATH = os.path.join(
@@ -109,7 +109,7 @@ def main(path='.', database_path=DATABASE_PATH, iterations=50,
         # inputs to exponential or nonexponential.
         target_data = pd.DataFrame(
             alpha_dataset.ObsRPShape, columns=['ObsRPShape']).apply(
-                binaryRPClassAssign, axis=1)
+                binary_rp_class_assign, axis=1)
 
         # categorical feature evaluation: Step 1 create containers for
         # feature names and dataframe for uniques.
@@ -158,18 +158,18 @@ def main(path='.', database_path=DATABASE_PATH, iterations=50,
         # it requires that we factorize, then apply and conform to dimensionless
         # parameters, and then reencode to recover categorical variables.
         training_data['tempKelvin'] = 25 + 273.15
-        training_data['relPermValue'] = training_data.apply(relPermittivity,
+        training_data['relPermValue'] = training_data.apply(rel_permittivity,
                                                             axis=1)
-        training_data['N_r'] = training_data.apply(dimAspectRatioAssign, axis=1)
-        training_data['N_a'] = training_data.apply(attractionNumber, axis=1)
-        training_data['N_g'] = training_data.apply(gravityNumber, axis=1)
-        training_data['N_Pe'] = training_data.apply(dimPecletNumAssign, axis=1)
-        training_data['N_Lo'] = training_data.apply(londonForce, axis=1)
-        training_data['D_l'] = training_data.apply(debyeLength, axis=1)
-        training_data['N_Dl'] = training_data.apply(debyeNumber, axis=1)
-        training_data['M_inj'] = training_data.apply(massFlow, axis=1)
+        training_data['N_r'] = training_data.apply(dim_aspect_ratio_assign, axis=1)
+        training_data['N_a'] = training_data.apply(attraction_number, axis=1)
+        training_data['N_g'] = training_data.apply(gravity_number, axis=1)
+        training_data['N_Pe'] = training_data.apply(dim_peclet_num_assign, axis=1)
+        training_data['N_Lo'] = training_data.apply(london_force, axis=1)
+        training_data['D_l'] = training_data.apply(debye_length, axis=1)
+        training_data['N_Dl'] = training_data.apply(debye_number, axis=1)
+        training_data['M_inj'] = training_data.apply(mass_flow, axis=1)
         training_data['M_inj'] = 1e6 * training_data['M_inj']  # in mg
-        training_data['N_as'] = training_data.apply(porosityHappel, axis=1)
+        training_data['N_as'] = training_data.apply(porosity_happel, axis=1)
         training_data['N_Z1'] = training_data.apply(electrokinetic1, axis=1)
         training_data['N_Z2'] = training_data.apply(electrokinetic2, axis=1)
         training_data['N_CA'] = (
@@ -178,10 +178,10 @@ def main(path='.', database_path=DATABASE_PATH, iterations=50,
         training_data['ConcHA'] = 1e3 * training_data['ConcHA']  # in mg/L
 
         # put back categorical data encodes (see note above)
-        training_data['NMId'] = training_data.apply(NMIDClassAssign, axis=1)
-        training_data['SaltType'] = training_data.apply(SaltClassAssign, axis=1)
-        training_data['Coating'] = training_data.apply(CoatingClassAssign, axis=1)
-        training_data['TypeNOM'] = training_data.apply(TypeNOMClassAssign, axis=1)
+        training_data['NMId'] = training_data.apply(nmid_class_assign, axis=1)
+        training_data['SaltType'] = training_data.apply(salt_class_assign, axis=1)
+        training_data['Coating'] = training_data.apply(coating_class_assign, axis=1)
+        training_data['TypeNOM'] = training_data.apply(type_nom_class_assign, axis=1)
 
         # Output a final copy of the training data for later use
         training_data.to_csv(

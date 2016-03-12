@@ -1,0 +1,23 @@
+[REPORTS]
+
+reports=no
+output-format=colorized
+
+[MESSAGES CONTROL]
+
+confidence=HIGH
+
+[BASIC]
+
+# One-letter variables are pretty useful in formulas.
+variable-rgx=[a-z_][a-z0-9_]{0,30}$
+variable-name-hint=[a-z_][a-z0-9_]{0,30}$
+
+[DESIGN]
+
+# Loosen these restrictions.
+max-args=10
+max-locals=20
+max-statements=70
+max-attributes=10
+min-public-methods=0
