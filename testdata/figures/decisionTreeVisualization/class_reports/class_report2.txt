@@ -1,7 +1,7 @@
                 precision    recall  f1-score   support
 
-   exponential       0.86      0.98      0.92       162
-nonexponential       0.90      0.52      0.66        52
+   exponential       0.83      1.00      0.91        25
+nonexponential       1.00      0.38      0.55         8
 
-   avg / total       0.87      0.87      0.86       214
+   avg / total       0.87      0.85      0.82        33
 
