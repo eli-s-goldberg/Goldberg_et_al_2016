@@ -31,6 +31,7 @@ kNum = 5  # Number of cross folds
 # Set stack names for
 importNames = []
 for i in range(0, iterations):
+    # TODO(PandaStaber) This doesn't exist.
     importNames.append('enmTransportData_edit.xlsx')
 
 # initialize containers for speed
@@ -189,7 +190,7 @@ if __name__ == '__main__':  # wrap inside to prevent parallelize errors on windo
         trainingData['ConcHA'].hist(by=trainingData['classification'], bins=10)
         # bigData = pd.groupby(trainingData,['N_Dl','classification']).size()
 
-
+        # TODO(peterthenelson) The above code is hugely redundant with optimal_tree.
         binNumber = 10
         ParameterList = [
             'N_Lo',  # 13 bins

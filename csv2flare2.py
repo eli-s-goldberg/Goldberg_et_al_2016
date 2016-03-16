@@ -18,6 +18,7 @@ mycols = [
 ]
 layers = ['nmId', 'shape', 'nomLayer', 'dissNomConc', 'concPump']
 
+# TODO(PandaStabber) This file doesn't exist (generally).
 df = read_csv("/Users/future/PycharmProjects/javaJunk/basic_table.csv", usecols = mycols)
 df.sort(mycols,inplace=True)
 df.to_csv("modifiedcsv.csv", na_rep='-', header=False, index=False,
