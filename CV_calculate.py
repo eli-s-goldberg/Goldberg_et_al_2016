@@ -5,6 +5,7 @@ from scipy import stats
 import os
 import csv, itertools, json
 
+# TODO(PandaStabber) The paths point to non-existent files even if you change this to './'.
 path = '/Users/future/Google Drive/phd_root/programming_root/enmTransportPrediction/'
 
 
