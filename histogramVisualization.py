@@ -6,7 +6,7 @@ import csv, itertools, json
 import math
 
 multiprocessing.cpu_count()
-from helperFunctions import *
+from helper_functions import *
 from sklearn.preprocessing import OneHotEncoder
 import matplotlib.pyplot as plt
 import pandas as pd
