@@ -11,17 +11,12 @@ TODOs
   there was an intermediate run-a-binary-with-options way to get a *little*
   flexibility for people who aren't great coders.
 - Figure out how to dump SVGs w/o opening a browser and using crowbar.
-
-### Features
 - Eli also wants the classifiers to be more pluggable.
 
-### Testing and Refactoring
-- Write tests for the helper functions.
+### Cleanup and Productionizing
 - Break up optimal_tree into functions and test them.
-
-### Style
 - Many style changes in py files (and their names in some cases).
-- Unify docstring style (to what standard?).
-
-### Legal
+- Write tests for the helper functions.
+- Unify docstring style (to numpy standard).
 - Add a license file. BSD? MIT? Apache?
+- Reorganize layout to be a releasable package (w/setup.py, etc.)
