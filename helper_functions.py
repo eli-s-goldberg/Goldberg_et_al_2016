@@ -8,6 +8,8 @@ import os
 import pandas
 from sklearn.feature_extraction import DictVectorizer
 
+# TODO(peterthenelson) Fix division errors, from __future__ import division,
+# and remove remaining extraneous float()s.
 # TODO(peterthenelson) Add docstrings.
 # pylint: disable=missing-docstring
 
@@ -22,106 +24,105 @@ def make_dirs(path):
         if exc.errno != errno.EEXIST or not os.path.isdir(path):
             raise
 
+# Exponential response profile shape names.
+_EXP_RP_SHAPES = ["EXP", "HE"]
+# Boltzmann's constant.
+_BOLTZ = 1.3806504e-23
+# 25 Celcius in Kelvin.
+_TEMP_K = 25 + 273.15
+# Gravitational constant.
+_GRAV = 9.81
+# Permittivity of free space.
+_PERM_FREE_SPACE = 8.854e-12
+# Fundamental charge in coloumbs.
+_ELEC_CHARGE = 1.602176466e-19
+# Avogadro's number
+_AVOGADRO = 6.02e23
+# Dialectric constant of water at 25C in coulombs/volt/m.
+_WATER_DIALECTRIC = 7.83e-9
+
 def binary_rp_class_assign(row):
-    if row.ObsRPShape in ["EXP", "HE"]:
+    if row.ObsRPShape in _EXP_RP_SHAPES:
         return 0
     else:
         return 1
 
 def binary_rp_class_assign_labels(row):
-    if row.ObsRPShape in ["EXP", "HE"]:
+    if row.ObsRPShape in _EXP_RP_SHAPES:
         return "exponential"
     else:
         return "nonexponential"
 
 def dim_aspect_ratio_assign(row):
-    return float(row.PartDiam / row.CollecDiam)
+    return float(row.PartDiam) / row.CollecDiam
 
 def dim_peclet_num_assign(row):
-    bolz_constant = float(1.3806504 * 10 ** -23)
-    temp_k = 25 + 273.15
-    diffusion_coef = float(bolz_constant * temp_k / (3 * math.pi * 8.94e-4 * row.PartDiam))
-    return float(row.Darcy * row.CollecDiam / diffusion_coef)
-
+    # TODO(peterthenelson) What is this other constant?
+    diffusion_coef = _BOLTZ * _TEMP_K / (3 * math.pi * 8.94e-4 * row.PartDiam)
+    return row.Darcy * row.CollecDiam / diffusion_coef
 
 def gravitational_number(row):
-    p_radius = float((row.PartDiam) / 2)
-    bolz_constant = float(1.3806504 * 10 ** -23)
-    temp_k = 25 + 273.15
+    p_radius = row.PartDiam / 2.0
     # TODO(peterthenelson) 4/3 is a bug (==> 1, not 1.3...).
-    return float((4/3) * math.pi * (p_radius**4) * (row.PartDensity-1000) *
-                 9.81 / (bolz_constant * temp_k))
-
+    return ((4/3) * math.pi * (p_radius**4) * (row.PartDensity-1000) * _GRAV /
+            (_BOLTZ * _TEMP_K))
 
 def attraction_number(row):
-    p_radius = float((row.PartDiam) / 2)
+    p_radius = row.PartDiam / 2.0
     denominator = 12 * math.pi * p_radius ** 2 * row.Darcy
-    return float(row.Hamaker / denominator)
-
+    return row.Hamaker / denominator
 
 def gravity_number(row):
     temp = row.tempKelvin
-    abs_visc = float(math.exp(-3.7188 + (578.919 / (-137.546 + temp))))
-    p_radius = float((row.PartDiam) / 2)
-    numerator = (2 * p_radius ** 2) * (row.PartDensity - 1000) * 9.81
+    # TODO(peterthenelson) What are these constants?
+    abs_visc = math.exp(-3.7188 + (578.919 / (-137.546 + temp)))
+    p_radius = row.PartDiam / 2.0
+    numerator = (2 * p_radius ** 2) * (row.PartDensity - 1000) * _GRAV
     demoninator = 8 * abs_visc * row.Darcy
-    return float(numerator / demoninator)
-
+    return numerator / demoninator
 
 def debye_length(row):
-    perm_free_space = float(8.854 * 10 ** -12)
-    bolz_constant = float(1.3806504 * 10 ** -23)
-    elec_charge = float(1.602176466 * 10 ** -19)
-    num_avagadro = float(6.02 * 10 ** 23)
-    if row['SaltType'] == 3:
-        ion_str1 = float(1 * 10 ** (float(row['pH']) - 14))
-        ion_str2 = float(1 * 10 ** (-1 * float(row['pH'])))
-        zi_ci = float(1 ** 2 * ion_str1 + 1 ** 2 * ion_str2)
-        return float((1 / (float((num_avagadro * elec_charge ** 2 / (
-            perm_free_space * float(row['relPermValue']) * bolz_constant *
-            float(row['tempKelvin'])) * zi_ci) ** 0.5))))
-    elif row['SaltType'] == 1:
-        zi_ci = float(2 ** 2 * float(row['IonStr']) + 1 ** 2 * 2 *
-                      float(row['IonStr']))
-        return float((1 / (float((num_avagadro * elec_charge ** 2 / (
-            perm_free_space * float(row['relPermValue']) * bolz_constant *
-            float(row['tempKelvin'])) * zi_ci) ** 0.5))))
-    elif row['IonStr'] == 0:
+    # TODO(peterthenelson) Bugs in here w/exponentiation (1 ** 2 * x) ==> x.
+    # Calculate zi_ci or return early.
+    if row.SaltType == 3:
+        ion_str1 = 10 ** (row.pH - 14)
+        ion_str2 = 10 ** (-1 * row.pH)
+        zi_ci = 1.0 ** 2 * ion_str1 + 1.0 ** 2 * ion_str2
+    elif row.SaltType == 1:
+        ion_str = float(row.IonStr)
+        zi_ci = 2.0 ** 2 * ion_str + 1.0 ** 2 * 2 * ion_str
+    elif row.IonStr == 0:
+        # TODO(peterthenelson) Explain this default and why it comes in this
+        # order. Changing the order gives different results.
         return 1000e-9  # about 1um
     else:
-        zi_ci = float(1 ** 2 * float(row['IonStr']) + 1 ** 2 *
-                      float(row['IonStr']))
-        return float((1 / (float((num_avagadro * elec_charge ** 2 / (
-            perm_free_space * float(row['relPermValue']) * bolz_constant *
-            float(row['tempKelvin'])) * zi_ci) ** 0.5))))
-
+        ion_str = float(row.IonStr)
+        zi_ci = 1.0 ** 2 * ion_str + 1.0 ** 2 * ion_str
+    # TODO(peterthenelson) Hard to read / understand
+    return 1.0 / ((_AVOGADRO * _ELEC_CHARGE ** 2 / (_PERM_FREE_SPACE *
+        row.relPermValue * _BOLTZ * row.tempKelvin) * zi_ci) ** 0.5)
 
 def mass_flow(row):
     l = row.colLength
     w = row.colWidth
-    a = float(math.pi / 4 * row.colWidth ** 2)
+    a = math.pi / 4 * row.colWidth ** 2
     p = row.Poros
     p_vs = row.PvIn
-    return float(l * w * a * p * p_vs)
-
+    return l * w * a * p * p_vs
 
 def electrokinetic1(row):
-    v = 7.83e-9  # dialectric constant of water at 25C in coulombs/volt/m
     a = row.PartDiam / 2  # particle radius
     zp = row.PartZeta / 1e3  # particle zeta potential
     zc = row.CollecZeta / 1e3  # collector zeta potential
-    k = float(1.3806504 * 10 ** -23)  # boltzmann constant
     t = row.tempKelvin  # temperature
-
-    return float(v * a * (zp ** 2 + zc ** 2) / (4 * k * t))
-
+    return _WATER_DIALECTRIC * a * (zp ** 2 + zc ** 2) / (4 * _BOLTZ * t)
 
 def electrokinetic2(row):
     zp = row.PartZeta / 1e3  # particle zeta potential
     zc = row.CollecZeta / 1e3  # collector zeta potential
     numerator = 2 * (zp / zc)
     denominator = 1 + (zp / zc) ** 2
-    return float(numerator / denominator)
+    return numerator / denominator
 
 _REL_PERMITTIVITIES = {
     0: 4.4,    # C60
@@ -144,10 +145,8 @@ _REL_PERMITTIVITIES = {
     10: 10.0,  # CdSe
 }
 
-
 def rel_permittivity(row):
-    return _REL_PERMITTIVITIES.get(row['NMId'], 10.0)
-
+    return _REL_PERMITTIVITIES.get(row.NMId, 10.0)
 
 def chang_eta0(row):
     n_dl = row.N_Dl
@@ -159,51 +158,31 @@ def chang_eta0(row):
     n_pe = row.N_Pe
     n_g = row.N_g
 
-    return float(0.024 * n_dl ** (0.969) * n_z1 ** (-0.423) * n_z2 ** (2.880) * n_lo ** 1.5 + \
-                 3.176 * n_as ** (0.333) * n_r ** (-0.081) * n_pe ** (-0.715) * n_lo ** (2.687) + \
-                 0.222 * n_as * n_r ** (3.041) * n_pe ** (-0.514) * n_lo ** (0.125) + \
-                 n_r ** (-0.24) * n_g ** (1.11) * n_lo)
-
+    # TODO(peterthenelson) Where do all these constants come from?
+    return (0.024 * n_dl ** (0.969) * n_z1 ** (-0.423) * n_z2 ** (2.880) * n_lo ** 1.5 +
+            3.176 * n_as ** (0.333) * n_r ** (-0.081) * n_pe ** (-0.715) * n_lo ** (2.687) +
+            0.222 * n_as * n_r ** (3.041) * n_pe ** (-0.514) * n_lo ** (0.125) +
+            n_r ** (-0.24) * n_g ** (1.11) * n_lo)
 
 def london_force(row):
-    k = float(1.3806504 * 10 ** -23)
-    t = row.tempKelvin
-    a = row.Hamaker
-    return float(a / (6 * k * t))
-
+    return row.Hamaker / (6 * _BOLTZ * row.tempKelvin)
 
 def zeta_ratio_knockout(row):
-    # TODO(peterthenelson) I doubt modifying the row itself is intended.
     if row.N_z < 0:
-        row.N_z = 0
+        return 0.0
     return row.N_z
 
-
-# TODO(peterthenelson): I think this is unused and can be deleted
-# def heldout_score(clf, X_test, y_test):
-#    """compute deviance scores on ``X_test`` and ``y_test``. """
-#    clf.fit(X_test, y_test)
-#    score = np.zeros((n_estimators,), dtype=np.float64)
-#    for i, y_pred in enumerate(clf.staged_decision_function(X_test)):
-#        score[i] = clf.loss_(y_test, y_pred)
-#    return score
-
-
 def porosity_happel(row):
-    p = float(row.Poros)
-    gam = (1 - p) ** (.333333333)
+    # TODO(peterthenelson) Replace with 1.0/3
+    gam = (1 - row.Poros) ** (.333333333)
     numerator = 2 * (1 - gam ** 5)
     denominator = 2 - 3 * gam + 3 * gam ** 5 - 2 * gam ** 6
-    return float(numerator / denominator)
-
+    return numerator / denominator
 
 def debye_number(row):
-    d = row.D_l
-    dp = row.PartDiam
-    return float(dp / d)
+    return row.PartDiam / row.D_l
 
 def rules_gradient_boost(clf, features, labels, node_index=0):
-
     """Structure of rules in a fit decision tree classifier
 
     Parameters
@@ -215,7 +194,6 @@ def rules_gradient_boost(clf, features, labels, node_index=0):
         The names of the features and labels, respectively.
 
     """
-
     node = {}
     if clf.tree_.children_left[node_index] == -1:  # indicates leaf
         count_labels = zip(clf.tree_.value[node_index, 0], labels)
@@ -260,7 +238,6 @@ def rules_gradient_boost(clf, features, labels, node_index=0):
     return node
 
 def rules(clf, features, labels, node_index=0):
-
     """Structure of rules in a fit decision tree classifier
 
     Parameters
