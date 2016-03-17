@@ -75,20 +75,20 @@ def gravity_number(row):
     return numerator / demoninator
 
 def debye_length(row):
-    # TODO(peterthenelson) Bugs in here w/exponentiation (1 ** 2 * x) ==> x.
     # Calculate zi_ci or return early.
     if row.SaltType == 3:
         ion_str1 = 10 ** (row.pH - 14)
         ion_str2 = 10 ** (-1 * row.pH)
-        zi_ci = 1 ** 2 * ion_str1 + 1 ** 2 * ion_str2
+        zi_ci = 1 ** (2 * ion_str1) + 1 ** (2 * ion_str2)
     elif row.SaltType == 1:
-        zi_ci = 2 ** 2 * row.IonStr + 1 ** 2 * 2 * row.IonStr
+        # TODO(peterthenelson) Are there really supposed to be two 2's?
+        zi_ci = 2 ** (2 * row.IonStr) + 1 ** (2 * 2 * row.IonStr)
     elif row.IonStr == 0:
         # TODO(peterthenelson) Explain this default and why it comes in this
         # order. Changing the order gives different results.
         return 1000e-9  # about 1um
     else:
-        zi_ci = 1 ** 2 * row.IonStr + 1 ** 2 * row.IonStr
+        zi_ci = 1 ** (2 * row.IonStr) + 1 ** (2 * row.IonStr)
     # TODO(peterthenelson) Hard to read / understand
     return 1 / ((_AVOGADRO * _ELEC_CHARGE ** 2 / (_PERM_FREE_SPACE *
         row.relPermValue * _BOLTZ * row.tempKelvin) * zi_ci) ** 0.5)
