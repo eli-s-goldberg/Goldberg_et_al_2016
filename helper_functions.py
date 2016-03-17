@@ -60,12 +60,6 @@ def dim_peclet_num_assign(row):
     diffusion_coef = _BOLTZ * _TEMP_K / (3 * math.pi * 8.94e-4 * row.PartDiam)
     return row.Darcy * row.CollecDiam / diffusion_coef
 
-# TODO(peterthenelson) Unused?
-#def gravitational_number(row):
-#    p_radius = row.PartDiam / 2.0
-#    return ((4.0/3) * math.pi * (p_radius**4) * (row.PartDensity-1000) * _GRAV /
-#            (_BOLTZ * _TEMP_K))
-
 def attraction_number(row):
     p_radius = row.PartDiam / 2.0
     denominator = 12 * math.pi * p_radius ** 2 * row.Darcy
@@ -86,17 +80,17 @@ def debye_length(row):
     if row.SaltType == 3:
         ion_str1 = 10 ** (row.pH - 14)
         ion_str2 = 10 ** (-1 * row.pH)
-        zi_ci = 1.0 ** 2 * ion_str1 + 1.0 ** 2 * ion_str2
+        zi_ci = 1 ** 2 * ion_str1 + 1 ** 2 * ion_str2
     elif row.SaltType == 1:
-        zi_ci = 2.0 ** 2 * row.IonStr + 1.0 ** 2 * 2 * row.IonStr
+        zi_ci = 2 ** 2 * row.IonStr + 1 ** 2 * 2 * row.IonStr
     elif row.IonStr == 0:
         # TODO(peterthenelson) Explain this default and why it comes in this
         # order. Changing the order gives different results.
         return 1000e-9  # about 1um
     else:
-        zi_ci = 1.0 ** 2 * row.IonStr + 1.0 ** 2 * row.IonStr
+        zi_ci = 1 ** 2 * row.IonStr + 1 ** 2 * row.IonStr
     # TODO(peterthenelson) Hard to read / understand
-    return 1.0 / ((_AVOGADRO * _ELEC_CHARGE ** 2 / (_PERM_FREE_SPACE *
+    return 1 / ((_AVOGADRO * _ELEC_CHARGE ** 2 / (_PERM_FREE_SPACE *
         row.relPermValue * _BOLTZ * row.tempKelvin) * zi_ci) ** 0.5)
 
 def mass_flow(row):
@@ -170,8 +164,7 @@ def zeta_ratio_knockout(row):
     return row.N_z
 
 def porosity_happel(row):
-    # TODO(peterthenelson) Replace with 1.0/3
-    gam = (1 - row.Poros) ** (.333333333)
+    gam = (1 - row.Poros) ** (1/3)
     numerator = 2 * (1 - gam ** 5)
     denominator = 2 - 3 * gam + 3 * gam ** 5 - 2 * gam ** 6
     return numerator / denominator
