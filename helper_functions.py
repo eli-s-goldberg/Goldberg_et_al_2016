@@ -1,5 +1,6 @@
 """Helper functions for optimal_tree pipeline."""
 
+from __future__ import division
 import ast
 from decimal import Decimal
 import errno
@@ -8,8 +9,6 @@ import os
 import pandas
 from sklearn.feature_extraction import DictVectorizer
 
-# TODO(peterthenelson) Fix division errors, from __future__ import division,
-# and remove remaining extraneous float()s.
 # TODO(peterthenelson) Add docstrings.
 # pylint: disable=missing-docstring
 
@@ -54,18 +53,18 @@ def binary_rp_class_assign_labels(row):
         return "nonexponential"
 
 def dim_aspect_ratio_assign(row):
-    return float(row.PartDiam) / row.CollecDiam
+    return row.PartDiam / row.CollecDiam
 
 def dim_peclet_num_assign(row):
     # TODO(peterthenelson) What is this other constant?
     diffusion_coef = _BOLTZ * _TEMP_K / (3 * math.pi * 8.94e-4 * row.PartDiam)
     return row.Darcy * row.CollecDiam / diffusion_coef
 
-def gravitational_number(row):
-    p_radius = row.PartDiam / 2.0
-    # TODO(peterthenelson) 4/3 is a bug (==> 1, not 1.3...).
-    return ((4/3) * math.pi * (p_radius**4) * (row.PartDensity-1000) * _GRAV /
-            (_BOLTZ * _TEMP_K))
+# TODO(peterthenelson) Unused?
+#def gravitational_number(row):
+#    p_radius = row.PartDiam / 2.0
+#    return ((4.0/3) * math.pi * (p_radius**4) * (row.PartDensity-1000) * _GRAV /
+#            (_BOLTZ * _TEMP_K))
 
 def attraction_number(row):
     p_radius = row.PartDiam / 2.0
@@ -89,15 +88,13 @@ def debye_length(row):
         ion_str2 = 10 ** (-1 * row.pH)
         zi_ci = 1.0 ** 2 * ion_str1 + 1.0 ** 2 * ion_str2
     elif row.SaltType == 1:
-        ion_str = float(row.IonStr)
-        zi_ci = 2.0 ** 2 * ion_str + 1.0 ** 2 * 2 * ion_str
+        zi_ci = 2.0 ** 2 * row.IonStr + 1.0 ** 2 * 2 * row.IonStr
     elif row.IonStr == 0:
         # TODO(peterthenelson) Explain this default and why it comes in this
         # order. Changing the order gives different results.
         return 1000e-9  # about 1um
     else:
-        ion_str = float(row.IonStr)
-        zi_ci = 1.0 ** 2 * ion_str + 1.0 ** 2 * ion_str
+        zi_ci = 1.0 ** 2 * row.IonStr + 1.0 ** 2 * row.IonStr
     # TODO(peterthenelson) Hard to read / understand
     return 1.0 / ((_AVOGADRO * _ELEC_CHARGE ** 2 / (_PERM_FREE_SPACE *
         row.relPermValue * _BOLTZ * row.tempKelvin) * zi_ci) ** 0.5)
