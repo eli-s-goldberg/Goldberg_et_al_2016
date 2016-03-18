@@ -25,6 +25,7 @@ all it's glory :)
 import json
 import os
 import pandas as pd
+import numpy as np
 import pydot
 from sklearn import metrics
 from sklearn import grid_search
@@ -33,24 +34,20 @@ from sklearn.externals.six import StringIO
 from sklearn.metrics import classification_report
 from sklearn.cross_validation import StratifiedShuffleSplit
 
-from helper_functions import (
-    make_dirs, binary_rp_class_assign, dim_aspect_ratio_assign, dim_peclet_num_assign,
-    attraction_number, gravity_number, debye_length, mass_flow, electrokinetic1,
-    electrokinetic2, rel_permittivity, london_force, porosity_happel, debye_number,
-    rules, nmid_class_assign, salt_class_assign, coating_class_assign,
-    type_nom_class_assign, one_hot_dataframe)
+from helper_functions import (make_dirs, rules)
 
 # Default database
 DATABASE_PATH = os.path.join(
-    os.path.dirname(__file__), 'transport_database', 'enmTransportData.xlsx')
+    os.path.dirname(__file__), 'transport_database', 'data.xlsx')
 
 # Seed to use when running in deterministic mode.
 _SEED = 666
 
+
 # TODO(peterthenelson) Break up into functions
 # TODO(peterthenelson) Use argparse module for flags
-def main(path='.', database_path=DATABASE_PATH, iterations=50,
-         deterministic=False, stratified_holdout=True, holdout_size=0.15,
+def main(path='.', database_path=DATABASE_PATH, iterations=5,
+         deterministic=False, stratified_holdout=False, holdout_size=0.15,
          crossfolds=5):
     """Find optimal decision tree, write output files.
 
@@ -72,149 +69,24 @@ def main(path='.', database_path=DATABASE_PATH, iterations=50,
     run = 0
     f1_binary_average_score_track = []
     f1_report = pd.DataFrame()
+
+    target_data = np.squeeze(pd.read_excel(database_path,sheetname='target',index_col=None).as_matrix())
+    training_data = pd.read_excel(database_path,sheetname='training').as_matrix()
+    y_train = target_data
+    x_train = training_data
+
+    # if you want to seperate training data into holdout set to examine performance.
+    x_train_or_holdout = x_train
+    y_train_or_holdout = y_train
+
     for run in xrange(iterations):
         print run  # Print for convenience
-        alpha_dataset = pd.read_excel(database_path)
-
-        # Identify columns that are not needed for the assessment and drop
-        drop_column_list = [
-            'ProfileID',
-            'ColumnLWRatio',
-            'mbEffluent',
-            'mbRetained',
-            'mbEffluent_norm',
-            'mbRetained_norm',
-            'Dispersivity',
-            'Notes1',
-            'Notes2',
-            'Notes3',
-            'Notes4',
-            'Notes5']
-
-        alpha_dataset = alpha_dataset.drop(drop_column_list, 1)
-
-        # remove any row without data (NA)
-        alpha_dataset = alpha_dataset.dropna()
-
-        # save the dataset for later inspection and use as refinedDataset
-        alpha_dataset.to_csv(os.path.join(path, 'refinedDataset.csv'))
-
-        # copy the refined dataset to a new variable.
-        training_data = alpha_dataset.copy(deep=True)
-
-        # drop the classification from the training data (that wouldn't be fun:)
-        training_data = training_data.drop(['ObsRPShape'], 1)
-
-        # Set the target data, copy into a new database and binarize
-        # inputs to exponential or nonexponential.
-        target_data = pd.DataFrame(
-            alpha_dataset.ObsRPShape, columns=['ObsRPShape']).apply(
-                binary_rp_class_assign, axis=1)
-
-        # categorical feature evaluation: Step 1 create containers for
-        # feature names and dataframe for uniques.
-        training_cat_feature_names = []
-        training_feature_uniques = pd.DataFrame()
-
-        # categorical feature evaluation: Step 2 copy features into a seperate
-        # database so you don't mess up the first
-        train_data_feature_inspect = training_data.copy(deep=True)
-
-        # set an if statment to check what the categorical features are.
-        if database_path == DATABASE_PATH:
-            training_cat_feature_names = [
-                'NMId',
-                'SaltType',
-                'Coating',
-                'TypeNOM'
-            ]
-        else:  # set your own if these are not they
-            training_cat_feature_names = []
-
-        # categorical feature evaluation: Step 3 loop through names, pull out
-        # and store uniques and factorize
-        for features in training_cat_feature_names:
-            tempdf = pd.DataFrame(
-                train_data_feature_inspect[features].factorize()[1],
-                columns=[features])
-            training_feature_uniques = pd.concat( # pylint:disable=redefined-variable-type
-                [training_feature_uniques, tempdf], axis=1)
-            train_data_feature_inspect[features] = (
-                train_data_feature_inspect[features].factorize()[0])
-
-        # create temporary dataframe and store names. Concat with the uniques
-        # in case the database name changes.
-        tempdf2 = pd.DataFrame(columns=[database_basename])
-        training_feature_uniques = pd.concat(
-            [training_feature_uniques, tempdf2], axis=1)
-
-        # Once again copy the factorized data from the above loop into the
-        # training data.
-        training_data = train_data_feature_inspect.copy(deep=True)
-
-        # Apply dimensionless number feature dimension reduction, start by
-        # assigning assumed constants (i.e., temp). Note that this requires some
-        # data to be factorized. This will be changed in later versions, but now
-        # it requires that we factorize, then apply and conform to dimensionless
-        # parameters, and then reencode to recover categorical variables.
-        training_data['tempKelvin'] = 25 + 273.15
-        training_data['relPermValue'] = training_data.apply(rel_permittivity,
-                                                            axis=1)
-        training_data['N_r'] = training_data.apply(dim_aspect_ratio_assign, axis=1)
-        training_data['N_a'] = training_data.apply(attraction_number, axis=1)
-        training_data['N_g'] = training_data.apply(gravity_number, axis=1)
-        training_data['N_Pe'] = training_data.apply(dim_peclet_num_assign, axis=1)
-        training_data['N_Lo'] = training_data.apply(london_force, axis=1)
-        training_data['D_l'] = training_data.apply(debye_length, axis=1)
-        training_data['N_Dl'] = training_data.apply(debye_number, axis=1)
-        training_data['M_inj'] = training_data.apply(mass_flow, axis=1)
-        training_data['M_inj'] = 1e6 * training_data['M_inj']  # in mg
-        training_data['N_as'] = training_data.apply(porosity_happel, axis=1)
-        training_data['N_Z1'] = training_data.apply(electrokinetic1, axis=1)
-        training_data['N_Z2'] = training_data.apply(electrokinetic2, axis=1)
-        training_data['N_CA'] = (
-            training_data['colLength'] / training_data['colWidth'])
-        training_data['ConcIn'] = 1e3 * training_data['ConcIn']  # in mg/L
-        training_data['ConcHA'] = 1e3 * training_data['ConcHA']  # in mg/L
-
-        # put back categorical data encodes (see note above)
-        training_data['NMId'] = training_data.apply(nmid_class_assign, axis=1)
-        training_data['SaltType'] = training_data.apply(salt_class_assign, axis=1)
-        training_data['Coating'] = training_data.apply(coating_class_assign, axis=1)
-        training_data['TypeNOM'] = training_data.apply(type_nom_class_assign, axis=1)
-
-        # Output a final copy of the training data for later use
-        training_data.to_csv(
-            os.path.join(path, 'trainingdataAll.csv'), index=False, header=True)
-
-        # Drop overlapping features - Combination assessment: temporary
-        training_data = training_data.drop(
-            ['PublicationTitle', 'relPermValue', 'PartDensity', 'PvIn', 'Poros',
-             'D_l', 'tempKelvin', 'colLength', 'colWidth', 'PartDiam',
-             'CollecDiam', 'Darcy', 'IonStr', 'SaltType', 'pH', 'PartZeta',
-             'CollecZeta', 'PartIEP', 'Hamaker'], 1)
-
-        # More saving, post feature drop.
-        target_data.to_csv(os.path.join(path, 'targetdata.csv'),
-                           index=False, header=True)
-        training_data.to_csv(os.path.join(path, 'trainingdata.csv'),
-                             index=False, header=True)
-
-        # encode the categorical variables using a one-hot scheme so they're
-        # correctly considered in decision tree
-        training_data, _, _ = one_hot_dataframe(
-            training_data, ['NMId', 'Coating', 'TypeNOM'], replace=True)
 
         # assign the target data as y_all and the training data as x_all. Notice
         # that we train AND test on the same data. This is not commmon, but
         # we're employing the decision tree for a descriptive evaluation, not
         # its generic prediction performance
-        y_train = target_data.as_matrix()
-        x_train = training_data.as_matrix()
 
-        # if you want to seperate training data into holdout set to examine performance.
-        x_train_or_holdout = x_train
-        y_train_or_holdout = y_train
         if stratified_holdout:
             random_state = _SEED if deterministic else None
             sss = StratifiedShuffleSplit(
@@ -236,7 +108,7 @@ def main(path='.', database_path=DATABASE_PATH, iterations=50,
                   'min_samples_leaf': [11, 12, 13],
                   'max_features': [None, 'sqrt', 'log2'],
                   'random_state': [_SEED] if deterministic else [None]
-                 }
+                  }
 
         # investigate the best possible set of parameters using a cross
         # validation loop and the given grid. The cross-validation does not do
@@ -281,7 +153,7 @@ def main(path='.', database_path=DATABASE_PATH, iterations=50,
         f1_track['exponential'] = f1_binary_average_score_exp,
         f1_track['nonexponential'] = f1_binary_average_score_nonexp
         f1_track['average'] = f1_binary_average_score
-        f1_report = f1_report.append(f1_track) # pylint:disable=redefined-variable-type
+        f1_report = f1_report.append(f1_track)  # pylint:disable=redefined-variable-type
         f1_binary_average_score_track.append(f1_binary_average_score)
 
         # The following section creates figures to visualize the decision tree
@@ -294,7 +166,7 @@ def main(path='.', database_path=DATABASE_PATH, iterations=50,
         json_dir = os.path.join(
             path, 'figures', 'decisionTreeVisualization', 'flare_reports')
         make_dirs(json_dir)
-        json_path = os.path.join(json_dir, 'flare%d.json' % (run+1))
+        json_path = os.path.join(json_dir, 'flare%d.json' % (run + 1))
 
         data_target_names = ['exponential', 'nonexponential']
 
@@ -312,12 +184,12 @@ def main(path='.', database_path=DATABASE_PATH, iterations=50,
         graph = pydot.graph_from_dot_data(dot_data.getvalue())
         make_dirs(os.path.join(path, 'output/trees/tree'))
         graph.write_pdf(
-            os.path.join(path, 'output/trees/tree/%d.pdf' % (run+1)))
+            os.path.join(path, 'output/trees/tree/%d.pdf' % (run + 1)))
         class_report_dir = os.path.join(
             path, 'figures', 'decisionTreeVisualization', 'class_reports')
         make_dirs(class_report_dir)
         class_report_path = os.path.join(class_report_dir,
-                                         'class_report%d.txt' % (run+1))
+                                         'class_report%d.txt' % (run + 1))
         with open(class_report_path, "w") as outf:
             outf.write(classification_report(
                 y_train_or_holdout, y_pred, target_names=['exponential', 'nonexponential']))
@@ -325,11 +197,12 @@ def main(path='.', database_path=DATABASE_PATH, iterations=50,
 
     report_save_path = os.path.join(
         path, 'figures', 'decisionTreeVisualization',
-        'DecisiontreeScores%d.csv' % (run+1))
+        'DecisiontreeScores%d.csv' % (run + 1))
     f1_report.to_csv(report_save_path)
     f1_report.reset_index(inplace=True)
     print f1_report.describe()
     print "best performing decision tree index: ", f1_report['average'].argmax()
+
 
 if __name__ == '__main__':  # wrap inside to prevent parallelize errors on windows.
     main()
