@@ -46,7 +46,7 @@ _SEED = 666
 
 # TODO(peterthenelson) Break up into functions
 # TODO(peterthenelson) Use argparse module for flags
-def main(path='.', database_path=DATABASE_PATH, iterations=5,
+def main(path='.', database_path=DATABASE_PATH, iterations=50,
          deterministic=False, stratified_holdout=False, holdout_size=0.15,
          crossfolds=5):
     """Find optimal decision tree, write output files.
@@ -70,8 +70,8 @@ def main(path='.', database_path=DATABASE_PATH, iterations=5,
     f1_binary_average_score_track = []
     f1_report = pd.DataFrame()
 
-    target_data = np.squeeze(pd.read_excel(database_path,sheetname='target',index_col=None).as_matrix())
-    training_data = pd.read_excel(database_path,sheetname='training').as_matrix()
+    target_data = np.squeeze(pd.read_excel(database_path, sheetname='target'))
+    training_data = pd.read_excel(database_path, sheetname='training')
     y_train = target_data
     x_train = training_data
 
@@ -104,8 +104,8 @@ def main(path='.', database_path=DATABASE_PATH, iterations=5,
         clf = tree.DecisionTreeClassifier()
 
         # optimize classifier by brute-force parameter investigation
-        dpgrid = {'max_depth': [3, 4, 5],
-                  'min_samples_leaf': [11, 12, 13],
+        dpgrid = {'max_depth': [3,4,5],
+                  'min_samples_leaf': [11,12,13],
                   'max_features': [None, 'sqrt', 'log2'],
                   'random_state': [_SEED] if deterministic else [None]
                   }
@@ -122,7 +122,6 @@ def main(path='.', database_path=DATABASE_PATH, iterations=5,
 
         # store and print the best parameters
         best_params = grid_searcher.best_params_
-        print best_params
 
         # reinitialize and call the classifier with the best parameter
         clf = tree.DecisionTreeClassifier(**best_params)

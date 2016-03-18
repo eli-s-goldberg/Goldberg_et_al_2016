@@ -99,6 +99,7 @@ def main(path='.', database_path=IMPORT_DATABASE_PATH):
     training_data['n_g'] = training_data.apply(gravity_number, axis=1)
     training_data['n_Pe'] = training_data.apply(dim_peclet_num_assign, axis=1)
     training_data['n_Lo'] = training_data.apply(london_force, axis=1)
+    training_data['n_por'] = training_data.apply(porosity_happel,axis=1)
     training_data['n_dl'] = training_data.apply(electrical_double_layer_force_parameter, axis=1)
     training_data['m_inj'] = training_data.apply(mass_flow, axis=1)
     training_data['n_m_sorbed'] = training_data.apply(sorbed_mass_ratio, axis=1)
@@ -130,6 +131,7 @@ def main(path='.', database_path=IMPORT_DATABASE_PATH):
          'ionic_strength',
          'electrolyte_id',
          'ph',
+         'porosity',
          'm_inj',
          'debye_length',
          'enm_isoelectric_point',
