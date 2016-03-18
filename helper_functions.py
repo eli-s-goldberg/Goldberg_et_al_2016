@@ -1,3 +1,4 @@
+# coding=utf-8
 """Helper functions for optimal_tree pipeline."""
 
 from __future__ import division
@@ -8,6 +9,7 @@ import math
 import os
 import pandas
 from sklearn.feature_extraction import DictVectorizer
+
 
 # TODO(peterthenelson) Add docstrings.
 # pylint: disable=missing-docstring
@@ -23,123 +25,313 @@ def make_dirs(path):
         if exc.errno != errno.EEXIST or not os.path.isdir(path):
             raise
 
+
+# Constants
+_BOLTZ = 1.3806504e-23  # # Boltzmann's constant [J/K]
+_TEMP_K = 25 + 273.15  # Assumed all experiments at 25 C
+_GRAV = 9.81  # Gravitational constant [m/s^2]
+_PERM_FREE_SPACE = 8.854e-12  # Permittivity of vacuum. [C^2/(N.m^2)]
+_ELEC_CHARGE = 1.602176466e-19  # Fundamental charge [C].
+_AVOGADRO = 6.022140857e23  # Avogadro's number [1/mol]
+_WATER_DIALECTRIC = 80.4 * _PERM_FREE_SPACE  # Dialectric constant of water at 25C in coulombs/volt/m.
+_WATER_DENSITY = 1000 * 0.9970479  # Density of water at 25C
+_KINEMATIC_WATER_VISCOSITY = 8.94e-4  # Kinematic viscosity of water at 25C in Pa.s
+_COLLECTOR_DENSITY = 2650  # Density of quartz sand, used as a proxy for collector [kg/m^3]
+
 # Exponential response profile shape names.
 _EXP_RP_SHAPES = ["EXP", "HE"]
-# Boltzmann's constant.
-_BOLTZ = 1.3806504e-23
-# 25 Celcius in Kelvin.
-_TEMP_K = 25 + 273.15
-# Gravitational constant.
-_GRAV = 9.81
-# Permittivity of free space.
-_PERM_FREE_SPACE = 8.854e-12
-# Fundamental charge in coloumbs.
-_ELEC_CHARGE = 1.602176466e-19
-# Avogadro's number
-_AVOGADRO = 6.02e23
-# Dialectric constant of water at 25C in coulombs/volt/m.
-_WATER_DIALECTRIC = 7.83e-9
 
-def binary_rp_class_assign(row):
-    if row.ObsRPShape in _EXP_RP_SHAPES:
-        return 0
-    else:
-        return 1
+# Dictionaries
+# -- Electrolyte names and valences
+_ELECTROLYTE_VALENCE = {
+    'NaCl': [1, -1],
+    'CaCl2': [2, -1],
+    'KCl': [1, -1],
+    'KNO3': [1, -1],
+    'NaHCO3': [1, -1],
+    'H3PO4': [1, -3],
+    'Na3PO4': [1, -1],
+    'none': [0, 0]}
+# -- Electrolyte names and relative concentrations of subcomponents
+_ELECTROLYTE_CONCENTRATION = {
+    'NaCl': [1, 1],
+    'CaCl2': [1, 2],
+    'KCl': [1, 1],
+    'KNO3': [1, 1],
+    'NaHCO3': [1, 1],
+    'H3PO4': [3, 1],
+    'Na3PO4': [3, 1],
+    'none': [0, 0]}
+# -- ENM names and relative permittivity
+_REL_PERMITTIVITIES = {
+    'C60': 4.4,  # C60
+    'TiO2': 110,  # TiO2
+    'ZnO': 2,  # ZnO
+    'CuO': 18.1,  # CuO
+    'MWCNTs': 1328,  # MWCNTs
+    'Ag': 2.65,  # Ag
+    'CeO2': 26,  # CeO2
+    'Iron Oxide': 14.2,  # Iron Oxide
+    # 8: 3.9,  # SiO2 removed because no SiO2 with hamakers
+    # Originally reported at 7, but found it at 15.4 at 100Hz in Preparation and
+    # dielectric property of sintered monoclinic hydroxyapatite.
+    'nHAP': 15.4,  # nHAP
+    # Toshiyuki Ikoma, Atsushi Yamazaki, Satoshi Nakamura, Masaru Akao
+    # nBiochar Dielectric properties and microwave heating of oil palm biomass
+    # and biochar
+    'nBiochar': 2.9,  # biochar
+    # http://scholar.lib.vt.edu/theses/available/etd-04262005-181042/unrestricted/Ch2Theory.pdf
+    'QDs': 10.0,  # CdSe
+}
 
-def binary_rp_class_assign_labels(row):
-    if row.ObsRPShape in _EXP_RP_SHAPES:
-        return "exponential"
-    else:
-        return "nonexponential"
-
-def dim_aspect_ratio_assign(row):
-    return row.PartDiam / row.CollecDiam
-
-def dim_peclet_num_assign(row):
-    # TODO(peterthenelson) What is this other constant?
-    diffusion_coef = _BOLTZ * _TEMP_K / (3 * math.pi * 8.94e-4 * row.PartDiam)
-    return row.Darcy * row.CollecDiam / diffusion_coef
-
-def attraction_number(row):
-    p_radius = row.PartDiam / 2.0
-    denominator = 12 * math.pi * p_radius ** 2 * row.Darcy
-    return row.Hamaker / denominator
-
-def gravity_number(row):
-    temp = row.tempKelvin
-    # TODO(peterthenelson) What are these constants?
-    abs_visc = math.exp(-3.7188 + (578.919 / (-137.546 + temp)))
-    p_radius = row.PartDiam / 2.0
-    numerator = (2 * p_radius ** 2) * (row.PartDensity - 1000) * _GRAV
-    demoninator = 8 * abs_visc * row.Darcy
-    return numerator / demoninator
-
-def debye_length(row):
-    # TODO(peterthenelson) Bugs in here w/exponentiation (1 ** 2 * x) ==> x.
-    # Calculate zi_ci or return early.
-    if row.SaltType == 3:
-        ion_str1 = 10 ** (row.pH - 14)
-        ion_str2 = 10 ** (-1 * row.pH)
-        zi_ci = 1 ** 2 * ion_str1 + 1 ** 2 * ion_str2
-    elif row.SaltType == 1:
-        zi_ci = 2 ** 2 * row.IonStr + 1 ** 2 * 2 * row.IonStr
-    elif row.IonStr == 0:
-        # TODO(peterthenelson) Explain this default and why it comes in this
-        # order. Changing the order gives different results.
-        return 1000e-9  # about 1um
-    else:
-        zi_ci = 1 ** 2 * row.IonStr + 1 ** 2 * row.IonStr
-    # TODO(peterthenelson) Hard to read / understand
-    return 1 / ((_AVOGADRO * _ELEC_CHARGE ** 2 / (_PERM_FREE_SPACE *
-        row.relPermValue * _BOLTZ * row.tempKelvin) * zi_ci) ** 0.5)
-
-def mass_flow(row):
-    l = row.colLength
-    w = row.colWidth
-    a = math.pi / 4 * row.colWidth ** 2
-    p = row.Poros
-    p_vs = row.PvIn
-    return l * w * a * p * p_vs
 
 def electrokinetic1(row):
-    a = row.PartDiam / 2  # particle radius
-    zp = row.PartZeta / 1e3  # particle zeta potential
-    zc = row.CollecZeta / 1e3  # collector zeta potential
-    t = row.tempKelvin  # temperature
-    return _WATER_DIALECTRIC * a * (zp ** 2 + zc ** 2) / (4 * _BOLTZ * t)
+    '''
+    notes:  1) zeta potentials are in mV. if in V, remove the 1e3
+            2) relative dialectric is for water, if this is not true,
+            make a column and change the function.
+    references:
+            (1) You-Im Chang and Hsun-Chih Chan.
+            "Correlation equation for predicting filter coefficient under
+            unfavorable deposition conditions".
+            AIChE journal, 54(5):1235–1253, 2008.
+            (2) Rajagopalan, R. & Kim, J. S.
+            "Adsorption of brownian particles in the presence of potential
+            barriers: effect of different modes of double-layer interaction".
+            Journal of Colloid and Interface Science 83, 428–448 (1981).
+    :param row:
+    :return: 1st electrokinetic parameter
+    '''
+    a = row.enm_diameter / 2  # particle radius
+    zp = row.enm_zeta_potential / 1e3  # particle zeta potential in V
+    zc = row.collector_zeta_potential / 1e3  # collector zeta potential
+    return _WATER_DIALECTRIC * a * (zp ** 2 + zc ** 2) / (4 * _BOLTZ * _TEMP_K)
+
 
 def electrokinetic2(row):
-    zp = row.PartZeta / 1e3  # particle zeta potential
-    zc = row.CollecZeta / 1e3  # collector zeta potential
+    '''
+    notes:  1) zeta potentials are in mV. if in V, remove the 1e3
+            2) relative dialectric is for water, if this is not true,
+            make a column and change the function.
+    references:
+            (1) You-Im Chang and Hsun-Chih Chan.
+            "Correlation equation for predicting filter coefficient under
+            unfavorable deposition conditions".
+            AIChE journal, 54(5):1235–1253, 2008.
+
+            (2) Rajagopalan, R. & Kim, J. S.
+            "Adsorption of brownian particles in the presence of potential
+            barriers: effect of different modes of double-layer interaction".
+            Journal of Colloid and Interface Science 83, 428–448 (1981).
+    :param row:
+    :return: 2nd electrokinetic parameter
+    '''
+
+    zp = row.enm_zeta_potential / 1e3  # particle zeta potential
+    zc = row.collector_zeta_potential / 1e3  # collector zeta potential
     numerator = 2 * (zp / zc)
     denominator = 1 + (zp / zc) ** 2
     return numerator / denominator
 
-_REL_PERMITTIVITIES = {
-    0: 4.4,    # C60
-    1: 110.0,  # TiO2
-    2: 2.0,    # ZnO
-    3: 18.1,   # CuO
-    4: 1328.0, # MWCNTs
-    5: 2.65,   # Ag
-    6: 26.0,   # CeO2
-    7: 14.2,   # Iron Oxide
-    # 8: 3.9,  # SiO2 removed because no SiO2 with hamakers
-    # Originally reported at 7, but found it at 15.4 at 100Hz in Preparation and
-    # dielectric property of sintered monoclinic hydroxyapatite.
-    8: 15.4,   # nHAP
-    # Toshiyuki Ikoma, Atsushi Yamazaki, Satoshi Nakamura, Masaru Akao
-    # nBiochar Dielectric properties and microwave heating of oil palm biomass
-    # and biochar
-    9: 2.9,    # biochar
-    # http://scholar.lib.vt.edu/theses/available/etd-04262005-181042/unrestricted/Ch2Theory.pdf
-    10: 10.0,  # CdSe
-}
+
+def return_valence(row):
+    '''
+    notes: match ENM and return valence
+    :param row:
+    :return: corresponding electrolyte valence
+    '''
+    return _ELECTROLYTE_VALENCE.get(row.electrolyte_id, [0, 0])
+
+
+def return_electrolyte_relative_concentration(row):
+    '''
+    notes: match ENM and return relative concentration of ions
+    :param row:
+    :return: corresponding relative ion concentration
+    '''
+    return _ELECTROLYTE_CONCENTRATION.get(row.electrolyte_id, [0, 0])
+
+
+def return_ionic_strength(row):
+    '''
+    notes: if the is an electrolyte in solution (e.g., electrolyte_rel_conc != 0),
+    calculate ionic strength if not, then use the pH to determine the concentration of ions in solution.
+    :param  row:
+            valence:
+            electrolyte_rel_conc:
+    :return:
+    '''
+    if row.electrolyte_concentration != 0:
+        C_i_0 = row.electrolyte_concentration * row.electrolyte_rel_conc[0]
+        C_i_1 = row.electrolyte_concentration * row.electrolyte_rel_conc[1]
+        return 0.5 * (C_i_0 * row.valence[0] ** 2 + C_i_1 * row.valence[1] ** 2)
+    else:
+        h_plus_ions = 1.0 * 10 ** (row.ph - 14)
+        h_plus_valence = 1
+        oh_minus_ions = 1.0 * 10 ** (-1 * row.ph)
+        oh_minus_valence = 1
+        return 0.5 * (h_plus_ions * h_plus_valence ** 2) + (oh_minus_ions * oh_minus_valence ** 2)
+
+
+def debye_length(row):
+    numerator = _PERM_FREE_SPACE * row.enm_relative_permittivity * _BOLTZ * _TEMP_K
+    denominator = 2.0 * _AVOGADRO * _ELEC_CHARGE ** 2.0 * row.ionic_strength
+    return (numerator / denominator) ** 0.5
+
+
+def electrical_double_layer_force_parameter(row):
+    '''
+    references:
+            (1) Nathalie Tufenkji and Menachem Elimelech.
+            "Correlation Equation for Predicting Single-Collector
+            Efficiency in Physicochemical Filtration in Saturated
+            Porous Media."
+            Environmental Science & Technology, 38(2):529–536, January 2004
+    :param row:
+    :return: dimensionless EDL force parameter
+    '''
+    return row.enm_diameter / row.debye_length
+
+
+def dim_aspect_ratio_assign(row):
+    '''
+    references:
+            (1) Nathalie Tufenkji and Menachem Elimelech.
+            "Correlation Equation for Predicting Single-Collector
+            Efficiency in Physicochemical Filtration in Saturated
+            Porous Media."
+            Environmental Science & Technology, 38(2):529–536, January 2004
+    :param row:
+    :return: dimensionless aspect ratio
+    '''
+    return row.enm_diameter / row.collector_diameter
+
+
+def dim_peclet_num_assign(row):
+    '''
+    notes: 1) Assumes temperature of experiment is at 25C.
+    references:
+            (1) Nathalie Tufenkji and Menachem Elimelech.
+            "Correlation Equation for Predicting Single-Collector
+            Efficiency in Physicochemical Filtration in Saturated
+            Porous Media."
+            Environmental Science & Technology, 38(2):529–536, January 2004
+    :param row:
+    :return: dimensionless peclet number
+    '''
+    stokes_einstein_diffusion = _BOLTZ * _TEMP_K / (3 * math.pi * _KINEMATIC_WATER_VISCOSITY *
+                                                    row.enm_diameter)
+    return row.darcy_velocity * row.collector_diameter / stokes_einstein_diffusion
+
+
+def attraction_number(row):
+    '''
+    notes:  1) Assumes temperature of experiment is at 25C.
+    :param row:
+    :return:
+    '''
+    denominator = 3.0 * math.pi * _KINEMATIC_WATER_VISCOSITY * row.enm_diameter ** 2 * row.darcy_velocity
+    return row.hamaker_constant_combined / denominator
+
+
+def london_force(row):
+    '''
+    notes:  1) Assumes temperature of experiment is at 25C.
+    references:
+            (1) Nathalie Tufenkji and Menachem Elimelech.
+            "Correlation Equation for Predicting Single-Collector
+            Efficiency in Physicochemical Filtration in Saturated
+            Porous Media."
+            Environmental Science & Technology, 38(2):529–536, January 2004
+    :param row:
+    :return:
+    '''
+    return row.hamaker_constant_combined / (6 * _BOLTZ * _TEMP_K)
+
+
+def gravity_number(row):
+    '''
+    notes:  1) Assumes temperature of experiment is at 25C.
+    references:
+            (1) Nathalie Tufenkji and Menachem Elimelech.
+            "Correlation Equation for Predicting Single-Collector
+            Efficiency in Physicochemical Filtration in Saturated
+            Porous Media."
+            Environmental Science & Technology, 38(2):529–536, January 2004
+    :param row:
+    :return:
+    '''
+    p_radius = row.enm_diameter / 2.0
+    numerator = (2.0 * p_radius ** 2) * (row.enm_density - _WATER_DENSITY) * _GRAV
+    demoninator = 9 * _KINEMATIC_WATER_VISCOSITY * row.darcy_velocity
+    return numerator / demoninator
+
+
+def porosity_happel(row):
+    '''
+
+    :param row:
+    :return:
+    '''
+    gam = (1 - row.porosity) ** (1 / 3)
+    numerator = 2 * (1 - gam ** 5)
+    denominator = 2 - 3 * gam + 3 * gam ** 5 - 2 * gam ** 6
+    return numerator / denominator
+
+
+def mass_flow(row):
+    l = row.column_length
+    w = row.column_width
+    a = math.pi / 4 * row.column_width ** 2
+    p = row.porosity
+    p_vs = row.influent_pore_volumes
+    return l * w * a * p * p_vs
+
+
+def sorbed_mass_ratio(row):
+    l = row.column_length
+    w = row.column_width
+    a = math.pi / 4 * row.column_width ** 2
+    p = row.porosity
+
+    total_collector_mass = l * a * (1 - p) * _COLLECTOR_DENSITY
+
+    sorb_ratio = row.m_inj / total_collector_mass
+    return sorb_ratio
+
+def column_aspect_ratio(row):
+    return row.column_length/row.column_width
+
+def binary_rp_class_assign(row):
+    if row.rp_shape in _EXP_RP_SHAPES:
+        return 0
+    else:
+        return 1
+
+
+def binary_rp_class_assign_labels(row):
+    if row.rp_shape in _EXP_RP_SHAPES:
+        return "exponential"
+    else:
+        return "nonexponential"
+
 
 def rel_permittivity(row):
-    return _REL_PERMITTIVITIES.get(row.NMId, 10.0)
+    return _REL_PERMITTIVITIES.get(row.enm_id, 10.0)
 
-def chang_eta0(row):
+
+def tufenkji_eta0(row):
+    '''
+    notes: the empirical constants are derived empirically for use with CFT.
+    references:
+            (1) Nathalie Tufenkji and Menachem Elimelech.
+            "Correlation Equation for Predicting Single-Collector
+            Efficiency in Physicochemical Filtration in Saturated
+            Porous Media."
+            Environmental Science & Technology, 38(2):529–536, January 2004
+    :param row:
+    :return: returns the theoretical single collector efficiency
+    '''
     n_dl = row.N_Dl
     n_z1 = row.N_Z1
     n_z2 = row.N_Z2
@@ -149,28 +341,11 @@ def chang_eta0(row):
     n_pe = row.N_Pe
     n_g = row.N_g
 
-    # TODO(peterthenelson) Where do all these constants come from?
     return (0.024 * n_dl ** (0.969) * n_z1 ** (-0.423) * n_z2 ** (2.880) * n_lo ** 1.5 +
             3.176 * n_as ** (0.333) * n_r ** (-0.081) * n_pe ** (-0.715) * n_lo ** (2.687) +
             0.222 * n_as * n_r ** (3.041) * n_pe ** (-0.514) * n_lo ** (0.125) +
             n_r ** (-0.24) * n_g ** (1.11) * n_lo)
 
-def london_force(row):
-    return row.Hamaker / (6 * _BOLTZ * row.tempKelvin)
-
-def zeta_ratio_knockout(row):
-    if row.N_z < 0:
-        return 0.0
-    return row.N_z
-
-def porosity_happel(row):
-    gam = (1 - row.Poros) ** (1/3)
-    numerator = 2 * (1 - gam ** 5)
-    denominator = 2 - 3 * gam + 3 * gam ** 5 - 2 * gam ** 6
-    return numerator / denominator
-
-def debye_number(row):
-    return row.PartDiam / row.D_l
 
 def rules_gradient_boost(clf, features, labels, node_index=0):
     """Structure of rules in a fit decision tree classifier
@@ -193,11 +368,11 @@ def rules_gradient_boost(clf, features, labels, node_index=0):
         # TODO(peterthenelson) Is it intended to ignore the label in output?
         node['name'] = ', '.join('{} '.format(count)
                                  for count, _ in count_labels)
-        if  Decimal(node['name']) < 0:
+        if Decimal(node['name']) < 0:
             print ast.literal_eval(node['name'])
 
             node['name'] = '{}, nonexponential'.format(
-                round(Decimal(node['name']), 2)) #'nonexponential'
+                round(Decimal(node['name']), 2))  # 'nonexponential'
 
         else:
             # node['name'] = 'exponential'
@@ -226,6 +401,7 @@ def rules_gradient_boost(clf, features, labels, node_index=0):
                             rules(clf, features, labels, left_index)]
     # print node
     return node
+
 
 def rules(clf, features, labels, node_index=0):
     """Structure of rules in a fit decision tree classifier
@@ -262,68 +438,77 @@ def rules(clf, features, labels, node_index=0):
         node['name'] = "{} >= {}".format(feature, threshold)
         node['samples'] = '{}'.format(samples)
 
-
         left_index = clf.tree_.children_left[node_index]
         right_index = clf.tree_.children_right[node_index]
         node['children'] = [rules(clf, features, labels, right_index),
                             rules(clf, features, labels, left_index)]
     return node
 
-_NMID_CLASSES = [
-    "C60",     # 0
-    "TiO2",    # 1
-    "ZnO",     # 2
-    "CuO",     # 3
-    "MWCNT",   # 4
-    "Ag",      # 5
-    "CeO",     # 6
-    "FeOx",    # 7
-    "HAP",     # 8
-    "Biochar", # 9
-    "QD",      # 10
+
+_enm_id_CLASSES = [
+    "C60",  # 0
+    "TiO2",  # 1
+    "ZnO",  # 2
+    "CuO",  # 3
+    "MWCNT",  # 4
+    "Ag",  # 5
+    "CeO",  # 6
+    "FeOx",  # 7
+    "HAP",  # 8
+    "Biochar",  # 9
+    "QD",  # 10
 ]
 
-def nmid_class_assign(row):
-    return _NMID_CLASSES[row.NMId]
+
+def enm_id_class_assign(row):
+    return _enm_id_CLASSES[row.enm_id]
+
 
 _SALT_CLASSES = [
-    "NaCl",   # 0
+    "NaCl",  # 0
     "CaCl2",  # 1
-    "KCl",    # 2
-    "None",   # 3
-    "KNO3",   # 4
-    "NaHCO3", # 5
+    "KCl",  # 2
+    "None",  # 3
+    "KNO3",  # 4
+    "NaHCO3",  # 5
 ]
+
 
 def salt_class_assign(row):
     return _SALT_CLASSES[row.SaltType]
 
+
 _COATING_CLASSES = ["None", "IronOxide", "FeOOH"]
+
 
 def coating_class_assign(row):
     return _COATING_CLASSES[row.Coating]
 
+
 _NOM_CLASSES = [
-    "None",   # 0
-    "SRHA",   # 1
-    "Alg",    # 2
-    "TRIZMA", # 3
-    "FA",     # 4
-    "HA",     # 5
-    "Citric", # 6
-    "Oxalic", # 7
-    "Formic", # 8
+    "None",  # 0
+    "SRHA",  # 1
+    "Alg",  # 2
+    "TRIZMA",  # 3
+    "FA",  # 4
+    "HA",  # 5
+    "Citric",  # 6
+    "Oxalic",  # 7
+    "Formic",  # 8
 ]
+
 
 def type_nom_class_assign(row):
     return _NOM_CLASSES[row.TypeNOM]
+
 
 def one_hot_dataframe(data, cols, replace=False):
     """
     Small script that shows hot to do one hot encoding
     of categorical columns in a pandas DataFrame.
     See:
-    http://scikit-learn.org/dev/modules/generated/sklearn.preprocessing.OneHotEncoder.html#sklearn.preprocessing.OneHotEncoder
+    http://scikit-learn.org/dev/modules/generated/sklearn.preprocessing.OneHotEncoder.html#sklearn.preprocessing
+    .OneHotEncoder
     http://scikit-learn.org/dev/modules/generated/sklearn.feature_extraction.DictVectorizer.html
 
 
