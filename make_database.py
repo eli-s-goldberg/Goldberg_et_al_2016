@@ -13,9 +13,8 @@ from sklearn.cross_validation import StratifiedShuffleSplit
 from helper_functions import (
     make_dirs, binary_rp_class_assign, dim_aspect_ratio_assign, dim_peclet_num_assign,
     attraction_number, gravity_number, debye_length, mass_flow, electrokinetic1, return_ionic_strength,
-    electrokinetic2, rel_permittivity, return_valence, return_electrolyte_relative_concentration, sorbed_mass_ratio,
-    london_force, porosity_happel, electrical_double_layer_force_parameter, column_aspect_ratio,
-    rules, enm_id_class_assign, salt_class_assign, coating_class_assign, type_nom_class_assign, one_hot_dataframe)
+    electrokinetic2, rel_permittivity, return_valence, electrolyte_relative_concentration, sorbed_mass_ratio,
+    london_force, porosity_happel, edl_force, column_aspect_ratio, one_hot_dataframe)
 
 # Default database
 IMPORT_DATABASE_PATH = os.path.join(
@@ -87,20 +86,20 @@ def main(path='.', database_path=IMPORT_DATABASE_PATH):
     training_data['valence'] = training_data.apply(
         return_valence,axis=1)
     training_data['electrolyte_rel_conc'] = training_data.apply(
-        return_electrolyte_relative_concentration,axis=1)
+        electrolyte_relative_concentration,axis=1)
     training_data['ionic_strength'] = training_data.apply(
         return_ionic_strength,axis=1)
     training_data['debye_length'] = training_data.apply(
         debye_length,axis=1)
     training_data['n_dl'] = training_data.apply(
-        electrical_double_layer_force_parameter,axis=1)
+        edl_force,axis=1)
     training_data['n_asp'] = training_data.apply(dim_aspect_ratio_assign, axis=1)
     training_data['n_att'] = training_data.apply(attraction_number, axis=1)
     training_data['n_g'] = training_data.apply(gravity_number, axis=1)
     training_data['n_Pe'] = training_data.apply(dim_peclet_num_assign, axis=1)
     training_data['n_Lo'] = training_data.apply(london_force, axis=1)
     training_data['n_por'] = training_data.apply(porosity_happel,axis=1)
-    training_data['n_dl'] = training_data.apply(electrical_double_layer_force_parameter, axis=1)
+    training_data['n_dl'] = training_data.apply(edl_force, axis=1)
     training_data['m_inj'] = training_data.apply(mass_flow, axis=1)
     training_data['n_m_sorbed'] = training_data.apply(sorbed_mass_ratio, axis=1)
     training_data['n_z1'] = training_data.apply(electrokinetic1, axis=1)

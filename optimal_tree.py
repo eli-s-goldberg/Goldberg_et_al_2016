@@ -44,8 +44,8 @@ _SEED = 666
 
 # TODO(peterthenelson) Break up into functions
 # TODO(peterthenelson) Use argparse module for flags
-def main(path='.', database_path=DATABASE_PATH, iterations=50,
-         deterministic=False, stratified_holdout=True, holdout_size=0.15,
+def main(path='.', database_path=DATABASE_PATH, iterations=2,
+         deterministic=True, stratified_holdout=True, holdout_size=0.15,
          crossfolds=5):
     """Find optimal decision tree, write output files.
 
@@ -73,14 +73,11 @@ def main(path='.', database_path=DATABASE_PATH, iterations=50,
     f1_binary_average_score_track = []
     f1_report = pd.DataFrame()
 
-    target_data = np.squeeze(pd.read_excel(database_path, sheetname='target'))
-    training_data = pd.read_excel(database_path, sheetname='training')
+    target_data = np.array(np.squeeze(pd.read_excel(database_path, sheetname='target')))
+    training_data = pd.read_excel(database_path, sheetname='training').as_matrix()
     y_train = target_data
     x_train = training_data
 
-    # if you want to seperate training data into holdout set to examine performance.
-    x_train_or_holdout = x_train
-    y_train_or_holdout = y_train
 
     for run in xrange(iterations):
         print run  # Print for convenience  
@@ -102,6 +99,10 @@ def main(path='.', database_path=DATABASE_PATH, iterations=50,
 
             x_train_or_holdout = x_holdout
             y_train_or_holdout = y_holdout
+
+            # if you want to seperate training data into holdout set to examine performance.
+            x_train_or_holdout = x_train
+            y_train_or_holdout = y_train
 
         # initialize the classifier
         clf = tree.DecisionTreeClassifier()

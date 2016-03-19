@@ -5,6 +5,7 @@ dirty_files=(
   ./CV_calculate.py
   ./histogramVisualization.py
   ./optimal_tree.py
+  ./make_database.py
 )
 pylint --rcfile=.pylintrc $(comm -23 <(find . -iname '*.py'|sort) \
                           <(printf '%s\n' "${dirty_files[@]}"|sort))

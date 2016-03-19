@@ -143,7 +143,7 @@ def return_valence(row):
     return _ELECTROLYTE_VALENCE.get(row.electrolyte_id, [0, 0])
 
 
-def return_electrolyte_relative_concentration(row):
+def electrolyte_relative_concentration(row):
     '''
     notes: match ENM and return relative concentration of ions
     :param row:
@@ -162,9 +162,9 @@ def return_ionic_strength(row):
     :return:
     '''
     if row.electrolyte_concentration != 0:
-        C_i_0 = row.electrolyte_concentration * row.electrolyte_rel_conc[0]
-        C_i_1 = row.electrolyte_concentration * row.electrolyte_rel_conc[1]
-        return 0.5 * (C_i_0 * row.valence[0] ** 2 + C_i_1 * row.valence[1] ** 2)
+        c_i_0 = row.electrolyte_concentration * row.electrolyte_rel_conc[0]
+        c_i_1 = row.electrolyte_concentration * row.electrolyte_rel_conc[1]
+        return 0.5 * (c_i_0 * row.valence[0] ** 2 + c_i_1 * row.valence[1] ** 2)
     else:
         h_plus_ions = 1.0 * 10 ** (row.ph - 14)
         h_plus_valence = 1
@@ -179,7 +179,7 @@ def debye_length(row):
     return (numerator / denominator) ** 0.5
 
 
-def electrical_double_layer_force_parameter(row):
+def edl_force(row):
     '''
     references:
             (1) Nathalie Tufenkji and Menachem Elimelech.
@@ -299,8 +299,10 @@ def sorbed_mass_ratio(row):
     sorb_ratio = row.m_inj / total_collector_mass
     return sorb_ratio
 
+
 def column_aspect_ratio(row):
-    return row.column_length/row.column_width
+    return row.column_length / row.column_width
+
 
 def binary_rp_class_assign(row):
     if row.rp_shape in _EXP_RP_SHAPES:
@@ -444,64 +446,6 @@ def rules(clf, features, labels, node_index=0):
                             rules(clf, features, labels, left_index)]
     return node
 
-
-_enm_id_CLASSES = [
-    "C60",  # 0
-    "TiO2",  # 1
-    "ZnO",  # 2
-    "CuO",  # 3
-    "MWCNT",  # 4
-    "Ag",  # 5
-    "CeO",  # 6
-    "FeOx",  # 7
-    "HAP",  # 8
-    "Biochar",  # 9
-    "QD",  # 10
-]
-
-
-def enm_id_class_assign(row):
-    return _enm_id_CLASSES[row.enm_id]
-
-
-_SALT_CLASSES = [
-    "NaCl",  # 0
-    "CaCl2",  # 1
-    "KCl",  # 2
-    "None",  # 3
-    "KNO3",  # 4
-    "NaHCO3",  # 5
-]
-
-
-def salt_class_assign(row):
-    return _SALT_CLASSES[row.SaltType]
-
-
-_COATING_CLASSES = ["None", "IronOxide", "FeOOH"]
-
-
-def coating_class_assign(row):
-    return _COATING_CLASSES[row.Coating]
-
-
-_NOM_CLASSES = [
-    "None",  # 0
-    "SRHA",  # 1
-    "Alg",  # 2
-    "TRIZMA",  # 3
-    "FA",  # 4
-    "HA",  # 5
-    "Citric",  # 6
-    "Oxalic",  # 7
-    "Formic",  # 8
-]
-
-
-def type_nom_class_assign(row):
-    return _NOM_CLASSES[row.TypeNOM]
-
-
 def one_hot_dataframe(data, cols, replace=False):
     """
     Small script that shows hot to do one hot encoding
@@ -528,3 +472,4 @@ def one_hot_dataframe(data, cols, replace=False):
         data = data.drop(cols, axis=1)
         data = data.join(vec_data)
     return (data, vec_data, vec)
+

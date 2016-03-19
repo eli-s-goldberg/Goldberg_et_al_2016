@@ -10,8 +10,11 @@ confidence=HIGH
 [BASIC]
 
 # One-letter variables are pretty useful in formulas.
-variable-rgx=[a-z_][a-z0-9_]{0,30}$
-variable-name-hint=[a-z_][a-z0-9_]{0,30}$
+variable-rgx=[a-z_][a-z0-9_]{0,35}$
+variable-name-hint=[a-z_][a-z0-9_]{0,35}$
+function-rgx=[a-z_][a-z0-9_]{0,35}$
+function-name-hint=[a-z_][a-z0-9_]{0,35}$
+
 
 [DESIGN]
 
