@@ -34,12 +34,12 @@
     }
 
     #grid {
-        width: 1400;
+        width: 1400px;
         height: 250px;
     }
 
     .cell {
-        outline: 0px solid red;
+        outline: 1px solid red;
         float: left;
         height: 250px;
         width: 700px;
@@ -47,182 +47,172 @@
 
 </style>
 <body>
-    <div id="grid">
-        <div class="cell" id="N_g_div">
-            <script>
+<div id="grid">
+    <div class="cell" id="n_g_div">
+        <script>
 
-                var margin = {top: 10, right: 20, bottom: 30, left: 10},
-                width = 700 - margin.left - margin.right,
-                height = 250 - margin.top - margin.bottom;
+            var margin = {top: 10, right: 20, bottom: 30, left: 10},
+                    width = 700 - margin.left - margin.right,
+                    height = 250 - margin.top - margin.bottom;
 
-                var x = d3.scale.ordinal()
-                .rangeRoundBands([0, width], .1);
+            var x = d3.scale.ordinal()
+                    .rangeRoundBands([0, width], .1);
 
-                var y = d3.scale.linear()
-                .rangeRound([height, 0]);
+            var y = d3.scale.linear()
+                    .rangeRound([height, 0]);
 
-                var color = d3.scale.category10();
+            var color = d3.scale.category10();
 
-                var xAxis = d3.svg.axis()
-                .scale(x)
-                .orient("bottom");
+            var xAxis = d3.svg.axis()
+                    .scale(x)
+                    .orient("bottom");
 
-                var yAxis = d3.svg.axis()
-                .scale(y)
-                .orient("left")
-                .tickFormat(d3.format(".2s"));
+            var yAxis = d3.svg.axis()
+                    .scale(y)
+                    .orient("left")
+                    .tickFormat(d3.format(".2s"));
 
-                var chart1 = d3.select("#N_g_div").append("svg")
-                .attr("width", width + margin.left + margin.right)
-                .attr("height", height + margin.top + margin.bottom)
-                .append("g")
-                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+            var chart1 = d3.select("#n_g_div").append("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-                d3.csv("N_g_edited.csv", function (error, data) {
-                    if (error) throw error;
+            d3.csv("n_g.csv", function (error, data) {
+                if (error) throw error;
 
-                    color.domain(d3.keys(data[0]).filter(function (key) {
-                        return key !== "N_g";
-                    }));
+                color.domain(d3.keys(data[0]).filter(function (key) {
+                    return key !== "n_g";
+                }));
 
-                    data.forEach(function (d) {
-                        var y0 = 0;
-                        d.ages = color.domain().map(function (name) {
-                            return {name: name, y0: y0, y1: y0 += +d[name]};
-                        });
-                        d.total = d.ages[d.ages.length - 1].y1;
+                data.forEach(function (d) {
+                    var y0 = 0;
+                    d.ages = color.domain().map(function (name) {
+                        return {name: name, y0: y0, y1: y0 += +d[name]};
                     });
-                    x.domain(data.map(function (d) {
-                        return d.N_g;
-                    }));
-                    y.domain([0, 175])
-
-
-                    chart1.append("g")
-                    .attr("class", "x axis")
-                    .attr("transform", "translate(0," + height + ")")
-                    .call(xAxis);
-
-                // chart1.append("g")
-                //         .attr("class", "y axis")
-                //         .call(yAxis)
-                //         .append("text")
-                //         .attr("transform", "rotate(-90)")
-                //         .attr("y", 6)
-                //         .attr("dy", ".71em")
-                //         .style("text-anchor", "end")
-                //         .text("Experiments");
-                chart1.append("g")
-                .attr("class", "x axis")
-                .append("text")
-                .attr("transform", "rotate(-0)")
-                .attr("x", 6)
-                .attr("dx", (width - margin.left - margin.right) / 2)
-                .attr("dy", "0em")
-                .style("text-anchor", "left")
-                .text("Gravitational Number");
-
-                var N_g = chart1.selectAll(".N_g")
-                .data(data)
-                .enter().append("g")
-                .attr("class", "g")
-                .attr("transform", function (d) {
-                    return "translate(" + x(d.N_g) + ",0)";
+                    d.total = d.ages[d.ages.length - 1].y1;
                 });
+                x.domain(data.map(function (d) {
+                    return d.n_g;
+                }));
+                y.domain([0, 125])
 
-                N_g.selectAll("rect")
-                .data(function (d) {
-                    return d.ages;
-                })
-                .enter().append("rect")
-                .attr("width", 2)
-                .attr("transform", "translate(" + (x.rangeBand()) / 2 + "," + 0 + ")")
-                .attr("y", function (d) {
-                    return y(d.y1);
-                })
-                .attr("height", function (d) {
-                    return y(d.y0) - y(d.y1);
-                })
-                .style("fill", function (d) {
-                    return color(d.name);
-                })
 
-                N_g.selectAll("text")
-                .data(function (d) {
-                    return d.ages;
-                })
-                .enter()
-                .append("text")
-                .attr("x", x.rangeBand() / 2)
-                .attr("y", function (d, i) {
-                    return y(d.y1) + (y(d.y0) - y(d.y1)) / 4;
-                })
-                .style("text-anchor", "middle")
-                .text(function (d) {
-                    return d.y1
-                })
+                chart1.append("g")
+                        .attr("class", "x axis")
+                        .attr("transform", "translate(0," + height + ")")
+                        .call(xAxis);
+
+                chart1.append("g")
+                        .attr("class", "x axis")
+                        .append("text")
+                        .attr("transform", "rotate(-0)")
+                        .attr("x", 6)
+                        .attr("dx", (width - margin.left - margin.right) / 2)
+                        .attr("dy", "0em")
+                        .style("text-anchor", "left")
+                        .text("Gravitational Number");
+
+                var n_g = chart1.selectAll(".n_g")
+                        .data(data)
+                        .enter().append("g")
+                        .attr("class", "g")
+                        .attr("transform", function (d) {
+                            return "translate(" + x(d.n_g) + ",0)";
+                        });
+
+                n_g.selectAll("rect")
+                        .data(function (d) {
+                            return d.ages;
+                        })
+                        .enter().append("rect")
+                        .attr("width", 2)
+                        .attr("transform", "translate(" + (x.rangeBand()) / 2 + "," + 0 + ")")
+                        .attr("y", function (d) {
+                            return y(d.y1);
+                        })
+                        .attr("height", function (d) {
+                            return y(d.y0) - y(d.y1);
+                        })
+                        .style("fill", function (d) {
+                            return color(d.name);
+                        })
+
+                n_g.selectAll("text")
+                        .data(function (d) {
+                            return d.ages;
+                        })
+                        .enter()
+                        .append("text")
+                        .attr("x", x.rangeBand() / 2)
+                        .attr("y", function (d, i) {
+                            return y(d.y1) + (y(d.y0) - y(d.y1)) / 4;
+                        })
+                        .style("text-anchor", "middle")
+                        .text(function (d) {
+                            return d.y1 - d.y0
+                        })
 
                 var legend = chart1.selectAll(".legend")
-                .data(color.domain().slice().reverse())
-                .enter().append("g")
-                .attr("class", "legend")
-                .attr("transform", function (d, i) {
-                    return "translate(0," + i * 20 + ")";
-                });
+                        .data(color.domain().slice().reverse())
+                        .enter().append("g")
+                        .attr("class", "legend")
+                        .attr("transform", function (d, i) {
+                            return "translate(0," + i * 20 + ")";
+                        });
 
                 legend.append("rect")
-                .attr("x", width - 18)
-                .attr("width", 18)
-                .attr("height", 18)
-                .style("fill", color);
+                        .attr("x", width - 18)
+                        .attr("width", 18)
+                        .attr("height", 18)
+                        .style("fill", color);
 
                 legend.append("text")
-                .attr("x", width - 24)
-                .attr("y", 9)
-                .attr("dy", ".35em")
-                .style("text-anchor", "end")
-                .text(function (d) {
-                    return d;
-                });
+                        .attr("x", width - 24)
+                        .attr("y", 9)
+                        .attr("dy", ".35em")
+                        .style("text-anchor", "end")
+                        .text(function (d) {
+                            return d;
+                        });
 
             });
         </script>
     </div>
-
-    <div class="cell" id="N_z1_div">
+    <div class="cell" id="n_z1_div">
         <script>
             var margin = {top: 10, right: 20, bottom: 30, left: 10},
-            width = 700 - margin.left - margin.right,
-            height = 250 - margin.top - margin.bottom;
+                    width = 700 - margin.left - margin.right,
+                    height = 250 - margin.top - margin.bottom;
 
             var x = d3.scale.ordinal()
-            .rangeRoundBands([0, width], .1);
+                    .rangeRoundBands([0, width], .1);
 
             var y = d3.scale.linear()
-            .rangeRound([height, 0]);
+                    .rangeRound([height, 0]);
 
             var color = d3.scale.category10();
 
             var xAxis = d3.svg.axis()
-            .scale(x)
-            .orient("bottom");
+                    .scale(x)
+                    .orient("bottom");
 
             var yAxis = d3.svg.axis()
-            .scale(y)
-            .orient("left")
-            .tickFormat(d3.format(".2s"));
+                    .scale(y)
+                    .orient("left")
+                    .tickFormat(d3.format(".2s"));
 
-            var chart2 = d3.select("#N_z1_div").append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+            var chart2 = d3.select("#n_z1_div").append("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-            d3.csv("N_Z1.csv", function (error, data) {
+            d3.csv("n_z1.csv", function (error, data) {
                 if (error) throw error;
 
                 color.domain(d3.keys(data[0]).filter(function (key) {
-                    return key !== "N_Z1";
+                    return key !== "n_z1";
                 }));
 
                 data.forEach(function (d) {
@@ -233,136 +223,126 @@
                     d.total = d.ages[d.ages.length - 1].y1;
                 });
                 x.domain(data.map(function (d) {
-                    return d.N_Z1;
+                    return d.n_z1;
                 }));
-                y.domain([0, 175])
+                y.domain([0, 125])
 
                 chart2.append("g")
-                .attr("class", "x axis")
-                .attr("transform", "translate(0," + height + ")")
-                .call(xAxis);
-
-                // chart2.append("g")
-                //         .attr("class", "y axis")
-                //         .call(yAxis)
-                //         .append("text")
-                //         .attr("transform", "rotate(-90)")
-                //         .attr("y", 6)
-                //         .attr("dy", ".71em")
-                //         .style("text-anchor", "end")
-                //         .text("Experiments");
+                        .attr("class", "x axis")
+                        .attr("transform", "translate(0," + height + ")")
+                        .call(xAxis);
 
                 chart2.append("g")
-                .attr("class", "x axis")
-                .append("text")
-                .attr("transform", "rotate(-0)")
-                .attr("x", 6)
-                .attr("dx", (width - margin.left - margin.right) / 2)
-                .attr("dy", "0em")
-                .style("text-anchor", "left")
-                .text("First Electrokinetic Parameter");
+                        .attr("class", "x axis")
+                        .append("text")
+                        .attr("transform", "rotate(-0)")
+                        .attr("x", 6)
+                        .attr("dx", (width - margin.left - margin.right) / 2)
+                        .attr("dy", "0em")
+                        .style("text-anchor", "left")
+                        .text("First Electrokinetic Parameter");
 
-                var N_Z1 = chart2.selectAll(".N_Z1")
-                .data(data)
-                .enter().append("g")
-                .attr("class", "g")
-                .attr("transform", function (d) {
-                    return "translate(" + x(d.N_Z1) + ",0)";
-                });
+                var n_z1 = chart2.selectAll(".n_z1")
+                        .data(data)
+                        .enter().append("g")
+                        .attr("class", "g")
+                        .attr("transform", function (d) {
+                            return "translate(" + x(d.n_z1) + ",0)";
+                        });
 
-                N_Z1.selectAll("rect")
-                .data(function (d) {
-                    return d.ages;
-                })
-                .enter().append("rect")
-                .attr("width", 2)
-                .attr("transform", "translate(" + (x.rangeBand()) / 2 + "," + 0 + ")")
-                .attr("y", function (d) {
-                    return y(d.y1);
-                })
-                .attr("height", function (d) {
-                    return y(d.y0) - y(d.y1);
-                })
-                .style("fill", function (d) {
-                    return color(d.name);
-                })
+                n_z1.selectAll("rect")
+                        .data(function (d) {
+                            return d.ages;
+                        })
+                        .enter().append("rect")
+                        .attr("width", 2)
+                        .attr("transform", "translate(" + (x.rangeBand()) / 2 + "," + 0 + ")")
+                        .attr("y", function (d) {
+                            return y(d.y1);
+                        })
+                        .attr("height", function (d) {
+                            return y(d.y0) - y(d.y1);
+                        })
+                        .style("fill", function (d) {
+                            return color(d.name);
+                        })
 
-                N_Z1.selectAll("text")
-                .data(function (d) {
-                    return d.ages;
-                })
-                .enter()
-                .append("text")
-                .attr("x", x.rangeBand() / 2)
-                .attr("y", function (d, i) {
-                    return y(d.y1) + (y(d.y0) - y(d.y1)) / 4;
-                })
-                .style("text-anchor", "middle")
-                .text(function (d) {
-                    return d.y1 - d.y0
-                });
+                n_z1.selectAll("text")
+                        .data(function (d) {
+                            return d.ages;
+                        })
+                        .enter()
+                        .append("text")
+                        .attr("x", x.rangeBand() / 2)
+                        .attr("y", function (d, i) {
+                            return y(d.y1) + (y(d.y0) - y(d.y1)) / 4;
+                        })
+                        .style("text-anchor", "middle")
+                        .text(function (d) {
+                            return d.y1 - d.y0
+                        });
 
                 var legend = chart2.selectAll(".legend")
-                .data(color.domain().slice().reverse())
-                .enter().append("g")
-                .attr("class", "legend")
-                .attr("transform", function (d, i) {
-                    return "translate(0," + i * 20 + ")";
-                });
+                        .data(color.domain().slice().reverse())
+                        .enter().append("g")
+                        .attr("class", "legend")
+                        .attr("transform", function (d, i) {
+                            return "translate(0," + i * 20 + ")";
+                        });
 
                 legend.append("rect")
-                .attr("x", width - 18)
-                .attr("width", 18)
-                .attr("height", 18)
-                .style("fill", color);
+                        .attr("x", width - 18)
+                        .attr("width", 18)
+                        .attr("height", 18)
+                        .style("fill", color);
 
                 legend.append("text")
-                .attr("x", width - 24)
-                .attr("y", 9)
-                .attr("dy", ".35em")
-                .style("text-anchor", "end")
-                .text(function (d) {
-                    return d;
-                });
+                        .attr("x", width - 24)
+                        .attr("y", 9)
+                        .attr("dy", ".35em")
+                        .style("text-anchor", "end")
+                        .text(function (d) {
+                            return d;
+                        });
 
             });
         </script>
     </div>
-    <div class="cell" id="N_z2_div">
+    <div class="cell" id="n_z2_div">
         <script>
 
             var margin = {top: 10, right: 20, bottom: 30, left: 10},
-            width = 700 - margin.left - margin.right,
-            height = 250 - margin.top - margin.bottom;
+                    width = 700 - margin.left - margin.right,
+                    height = 250 - margin.top - margin.bottom;
 
             var x = d3.scale.ordinal()
-            .rangeRoundBands([0, width], .1);
+                    .rangeRoundBands([0, width], .1);
 
             var y = d3.scale.linear()
-            .rangeRound([height, 0]);
+                    .rangeRound([height, 0]);
 
             var color = d3.scale.category10();
 
             var xAxis = d3.svg.axis()
-            .scale(x)
-            .orient("bottom");
+                    .scale(x)
+                    .orient("bottom");
 
             var yAxis = d3.svg.axis()
-            .scale(y)
-            .orient("left")
-            .tickFormat(d3.format(".2s"));
+                    .scale(y)
+                    .orient("left")
+                    .tickFormat(d3.format(".2s"));
 
-            var chart3 = d3.select("#N_z2_div").append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+            var chart3 = d3.select("#n_z2_div").append("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-            d3.csv("N_Z2.csv", function (error, data) {
+            d3.csv("n_z2.csv", function (error, data) {
                 if (error) throw error;
 
                 color.domain(d3.keys(data[0]).filter(function (key) {
-                    return key !== "N_Z2";
+                    return key !== "n_z2";
                 }));
 
                 data.forEach(function (d) {
@@ -374,144 +354,135 @@
                 });
 
                 x.domain(data.map(function (d) {
-                    return d.N_Z2;
+                    return d.n_z2;
                 }));
-                y.domain([0, 175]);
+                y.domain([0, 125]);
 
                 chart3.append("g")
-                .attr("class", "x axis")
-                .attr("transform", "translate(0," + height + ")")
-                .call(xAxis)
-                .style("fill", function (d) {
-                    if (data < 0) {
-                        return "red"
-                    }
-                    else {
-                        return "black"
-                    }
-                });
+                        .attr("class", "x axis")
+                        .attr("transform", "translate(0," + height + ")")
+                        .call(xAxis)
+                        .style("fill", function (d) {
+                            if (data < 0) {
+                                return "red"
+                            }
+                            else {
+                                return "black"
+                            }
+                        });
 
-                // chart3.append("g")
-                //         .attr("class", "y axis")
-                //         .call(yAxis)
-                //         .append("text")
-                //         .attr("transform", "rotate(-90)")
-                //         .attr("y", 6)
-                //         .attr("dy", ".71em")
-                //         .style("text-anchor", "end")
-                //         .text("Experiments");
 
                 chart3.append("g")
-                .attr("class", "x axis")
-                .append("text")
-                .attr("transform", "rotate(-0)")
-                .attr("x", 6)
-                .attr("dx", (width - margin.left - margin.right) / 2)
-                .attr("dy", "0em")
-                .style("text-anchor", "left")
-                .text("Second Electrokinetic Parameter");
+                        .attr("class", "x axis")
+                        .append("text")
+                        .attr("transform", "rotate(-0)")
+                        .attr("x", 6)
+                        .attr("dx", (width - margin.left - margin.right) / 2)
+                        .attr("dy", "0em")
+                        .style("text-anchor", "left")
+                        .text("Second Electrokinetic Parameter");
 
-                var N_Z2 = chart3.selectAll(".N_Z2")
-                .data(data)
-                .enter().append("g")
-                .attr("class", "g")
-                .attr("transform", function (d) {
-                    return "translate(" + x(d.N_Z2) + ",0)";
-                });
+                var n_z2 = chart3.selectAll(".n_z2")
+                        .data(data)
+                        .enter().append("g")
+                        .attr("class", "g")
+                        .attr("transform", function (d) {
+                            return "translate(" + x(d.n_z2) + ",0)";
+                        });
 
-                N_Z2.selectAll("rect")
-                .data(function (d) {
-                    return d.ages;
-                })
-                .enter().append("rect")
-                .attr("width", 2)
-                .attr("transform", "translate(" + (x.rangeBand() / 2) + "," + 0 + ")")
-                .attr("y", function (d) {
-                    return y(d.y1);
-                })
-                .attr("height", function (d) {
-                    return y(d.y0) - y(d.y1);
-                })
-                .style("fill", function (d) {
-                    return color(d.name);
-                });
+                n_z2.selectAll("rect")
+                        .data(function (d) {
+                            return d.ages;
+                        })
+                        .enter().append("rect")
+                        .attr("width", 2)
+                        .attr("transform", "translate(" + (x.rangeBand() / 2) + "," + 0 + ")")
+                        .attr("y", function (d) {
+                            return y(d.y1);
+                        })
+                        .attr("height", function (d) {
+                            return y(d.y0) - y(d.y1);
+                        })
+                        .style("fill", function (d) {
+                            return color(d.name);
+                        });
 
-                N_Z2.selectAll("text")
-                .data(function (d) {
-                    return d.ages;
-                })
-                .enter()
-                .append("text")
-                .attr("x", x.rangeBand() / 2)
-                .attr("y", function (d, i) {
-                    return y(d.y1) + (y(d.y0) - y(d.y1)) / 4;
-                })
-                .style("text-anchor", "middle")
-                .text(function (d) {
-                    return d.y1 - d.y0
-                });
+                n_z2.selectAll("text")
+                        .data(function (d) {
+                            return d.ages;
+                        })
+                        .enter()
+                        .append("text")
+                        .attr("x", x.rangeBand() / 2)
+                        .attr("y", function (d, i) {
+                            return y(d.y1) + (y(d.y0) - y(d.y1)) / 4;
+                        })
+                        .style("text-anchor", "middle")
+                        .text(function (d) {
+                            return d.y1 - d.y0
+                        });
 
                 var legend = chart3.selectAll(".legend")
-                .data(color.domain().slice().reverse())
-                .enter().append("g")
-                .attr("class", "legend")
-                .attr("transform", function (d, i) {
-                    return "translate(0," + i * 20 + ")";
-                });
+                        .data(color.domain().slice().reverse())
+                        .enter().append("g")
+                        .attr("class", "legend")
+                        .attr("transform", function (d, i) {
+                            return "translate(0," + i * 20 + ")";
+                        });
 
                 legend.append("rect")
-                .attr("x", width - 18)
-                .attr("width", 18)
-                .attr("height", 18)
-                .style("fill", color);
+                        .attr("x", width - 18)
+                        .attr("width", 18)
+                        .attr("height", 18)
+                        .style("fill", color);
 
                 legend.append("text")
-                .attr("x", width - 24)
-                .attr("y", 9)
-                .attr("dy", ".35em")
-                .style("text-anchor", "end")
-                .text(function (d) {
-                    return d;
-                });
+                        .attr("x", width - 24)
+                        .attr("y", 9)
+                        .attr("dy", ".35em")
+                        .style("text-anchor", "end")
+                        .text(function (d) {
+                            return d;
+                        });
 
             });
         </script>
     </div>
-    <div class="cell" id="N_dl_div">
+    <div class="cell" id="n_dl_div">
         <script>
 
             var margin = {top: 10, right: 20, bottom: 30, left: 10},
-            width = 700 - margin.left - margin.right,
-            height = 250 - margin.top - margin.bottom;
+                    width = 700 - margin.left - margin.right,
+                    height = 250 - margin.top - margin.bottom;
 
             var x = d3.scale.ordinal()
-            .rangeRoundBands([0, width], .1);
+                    .rangeRoundBands([0, width], .1);
 
             var y = d3.scale.linear()
-            .rangeRound([height, 0]);
+                    .rangeRound([height, 0]);
 
             var color = d3.scale.category10();
 
             var xAxis = d3.svg.axis()
-            .scale(x)
-            .orient("bottom");
+                    .scale(x)
+                    .orient("bottom");
 
             var yAxis = d3.svg.axis()
-            .scale(y)
-            .orient("left")
-            .tickFormat(d3.format(".2s"));
+                    .scale(y)
+                    .orient("left")
+                    .tickFormat(d3.format(".2s"));
 
-            var chart4 = d3.select("#N_dl_div").append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+            var chart4 = d3.select("#n_dl_div").append("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-            d3.csv("N_Dl.csv", function (error, data) {
+            d3.csv("n_dl.csv", function (error, data) {
                 if (error) throw error;
 
                 color.domain(d3.keys(data[0]).filter(function (key) {
-                    return key !== "N_Dl";
+                    return key !== "n_dl";
                 }));
 
                 data.forEach(function (d) {
@@ -523,145 +494,134 @@
                 });
 
                 x.domain(data.map(function (d) {
-                    return d.N_Dl;
+                    return d.n_dl;
                 }));
-                y.domain([0, 175]);
+                y.domain([0, 125]);
 
                 chart4.append("g")
-                .attr("class", "x axis")
-                .attr("transform", "translate(0," + height + ")")
-                .call(xAxis)
-                .style("fill", function (d) {
-                    if (data < 0) {
-                        return "red"
-                    }
-                    else {
-                        return "black"
-                    }
-                });
-
-                // chart4.append("g")
-                //         .attr("class", "y axis")
-                //         .call(yAxis)
-                //         .append("text")
-                //         .attr("transform", "rotate(-90)")
-                //         .attr("y", 6)
-                //         .attr("dy", ".71em")
-                //         .style("text-anchor", "end")
-                //         .text("Experiments");
+                        .attr("class", "x axis")
+                        .attr("transform", "translate(0," + height + ")")
+                        .call(xAxis)
+                        .style("fill", function (d) {
+                            if (data < 0) {
+                                return "red"
+                            }
+                            else {
+                                return "black"
+                            }
+                        });
 
                 chart4.append("g")
-                .attr("class", "x axis")
-                .append("text")
-                .attr("transform", "rotate(-0)")
-                .attr("x", 6)
-                .attr("dx", (width - margin.left - margin.right) / 2)
-                .attr("dy", "0em")
-                .style("text-anchor", "left")
-                .text("Electrical Double-layer Force Parameter");
+                        .attr("class", "x axis")
+                        .append("text")
+                        .attr("transform", "rotate(-0)")
+                        .attr("x", 6)
+                        .attr("dx", (width - margin.left - margin.right) / 2)
+                        .attr("dy", "0em")
+                        .style("text-anchor", "left")
+                        .text("Electrical Double-layer Force Parameter");
 
-                var N_Dl = chart4.selectAll(".N_Dl")
-                .data(data)
-                .enter().append("g")
-                .attr("class", "g")
-                .attr("transform", function (d) {
-                    return "translate(" + x(d.N_Dl) + ",0)";
-                });
+                var n_dl = chart4.selectAll(".n_dl")
+                        .data(data)
+                        .enter().append("g")
+                        .attr("class", "g")
+                        .attr("transform", function (d) {
+                            return "translate(" + x(d.n_dl) + ",0)";
+                        });
 
-                N_Dl.selectAll("rect")
-                .data(function (d) {
-                    return d.ages;
-                })
-                .enter().append("rect")
-                .attr("width", 2)
-                .attr("transform", "translate(" + (x.rangeBand()) / 2 + "," + 0 + ")")
-                .attr("y", function (d) {
-                    return y(d.y1);
-                })
-                .attr("height", function (d) {
-                    return y(d.y0) - y(d.y1);
-                })
-                .style("fill", function (d) {
-                    return color(d.name);
-                });
+                n_dl.selectAll("rect")
+                        .data(function (d) {
+                            return d.ages;
+                        })
+                        .enter().append("rect")
+                        .attr("width", 2)
+                        .attr("transform", "translate(" + (x.rangeBand()) / 2 + "," + 0 + ")")
+                        .attr("y", function (d) {
+                            return y(d.y1);
+                        })
+                        .attr("height", function (d) {
+                            return y(d.y0) - y(d.y1);
+                        })
+                        .style("fill", function (d) {
+                            return color(d.name);
+                        });
 
-                N_Dl.selectAll("text")
-                .data(function (d) {
-                    return d.ages;
-                })
-                .enter()
-                .append("text")
-                .attr("x", x.rangeBand() / 2)
-                .attr("y", function (d, i) {
-                    return y(d.y1) + (y(d.y0) - y(d.y1)) * 0;
-                })
-                .style("text-anchor", "top")
-                .text(function (d) {
-                    return d.y1 - d.y0
-                });
+                n_dl.selectAll("text")
+                        .data(function (d) {
+                            return d.ages;
+                        })
+                        .enter()
+                        .append("text")
+                        .attr("x", x.rangeBand() / 2)
+                        .attr("y", function (d, i) {
+                            return y(d.y1) + (y(d.y0) - y(d.y1)) * 0;
+                        })
+                        .style("text-anchor", "top")
+                        .text(function (d) {
+                            return d.y1 - d.y0
+                        });
 
                 var legend = chart4.selectAll(".legend")
-                .data(color.domain().slice().reverse())
-                .enter().append("g")
-                .attr("class", "legend")
-                .attr("transform", function (d, i) {
-                    return "translate(0," + i * 20 + ")";
-                });
+                        .data(color.domain().slice().reverse())
+                        .enter().append("g")
+                        .attr("class", "legend")
+                        .attr("transform", function (d, i) {
+                            return "translate(0," + i * 20 + ")";
+                        });
 
                 legend.append("rect")
-                .attr("x", width - 18)
-                .attr("width", 18)
-                .attr("height", 18)
-                .style("fill", color);
+                        .attr("x", width - 18)
+                        .attr("width", 18)
+                        .attr("height", 18)
+                        .style("fill", color);
 
                 legend.append("text")
-                .attr("x", width - 24)
-                .attr("y", 9)
-                .attr("dy", ".35em")
-                .style("text-anchor", "end")
-                .text(function (d) {
-                    return d;
-                });
+                        .attr("x", width - 24)
+                        .attr("y", 9)
+                        .attr("dy", ".35em")
+                        .style("text-anchor", "end")
+                        .text(function (d) {
+                            return d;
+                        });
 
             });
         </script>
     </div>
-
-    <div class="cell" id="N_asp_div">
+    <div class="cell" id="n_porp_div">
         <script>
 
             var margin = {top: 10, right: 20, bottom: 30, left: 10},
-            width = 700 - margin.left - margin.right,
-            height = 250 - margin.top - margin.bottom;
+                    width = 700 - margin.left - margin.right,
+                    height = 250 - margin.top - margin.bottom;
 
             var x = d3.scale.ordinal()
-            .rangeRoundBands([0, width], .1);
+                    .rangeRoundBands([0, width], .1);
 
             var y = d3.scale.linear()
-            .rangeRound([height, 0]);
+                    .rangeRound([height, 0]);
 
             var color = d3.scale.category10();
 
             var xAxis = d3.svg.axis()
-            .scale(x)
-            .orient("bottom");
+                    .scale(x)
+                    .orient("bottom");
 
             var yAxis = d3.svg.axis()
-            .scale(y)
-            .orient("left")
-            .tickFormat(d3.format(".2s"));
+                    .scale(y)
+                    .orient("left")
+                    .tickFormat(d3.format(".2s"));
 
-            var chart5 = d3.select("#N_asp_div").append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+            var chart5 = d3.select("#n_porp_div").append("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-            d3.csv("N_r.csv", function (error, data) {
+            d3.csv("n_asp.csv", function (error, data) {
                 if (error) throw error;
 
                 color.domain(d3.keys(data[0]).filter(function (key) {
-                    return key !== "N_r";
+                    return key !== "n_asp";
                 }));
 
                 data.forEach(function (d) {
@@ -673,145 +633,134 @@
                 });
 
                 x.domain(data.map(function (d) {
-                    return d.N_r;
+                    return d.n_asp;
                 }));
-                y.domain([0, 175]);
+                y.domain([0, 125]);
 
                 chart5.append("g")
-                .attr("class", "x axis")
-                .attr("transform", "translate(0," + height + ")")
-                .call(xAxis)
-                .style("fill", function (d) {
-                    if (data < 0) {
-                        return "red"
-                    }
-                    else {
-                        return "black"
-                    }
-                });
-
-                // chart5.append("g")
-                //         .attr("class", "y axis")
-                //         .call(yAxis)
-                //         .append("text")
-                //         .attr("transform", "rotate(-90)")
-                //         .attr("y", 6)
-                //         .attr("dy", ".71em")
-                //         .style("text-anchor", "end")
-                //         .text("Experiments");
+                        .attr("class", "x axis")
+                        .attr("transform", "translate(0," + height + ")")
+                        .call(xAxis)
+                        .style("fill", function (d) {
+                            if (data < 0) {
+                                return "red"
+                            }
+                            else {
+                                return "black"
+                            }
+                        });
 
                 chart5.append("g")
-                .attr("class", "x axis")
-                .append("text")
-                .attr("transform", "rotate(-0)")
-                .attr("x", 6)
-                .attr("dx", (width - margin.left - margin.right) / 2)
-                .attr("dy", "0em")
-                .style("text-anchor", "left")
-                .text("Aspect Ratio");
+                        .attr("class", "x axis")
+                        .append("text")
+                        .attr("transform", "rotate(-0)")
+                        .attr("x", 6)
+                        .attr("dx", (width - margin.left - margin.right) / 2)
+                        .attr("dy", "0em")
+                        .style("text-anchor", "left")
+                        .text("Aspect Ratio");
 
-                var N_r = chart5.selectAll(".N_r")
-                .data(data)
-                .enter().append("g")
-                .attr("class", "g")
-                .attr("transform", function (d) {
-                    return "translate(" + x(d.N_r) + ",0)";
-                });
+                var n_asp = chart5.selectAll(".n_asp")
+                        .data(data)
+                        .enter().append("g")
+                        .attr("class", "g")
+                        .attr("transform", function (d) {
+                            return "translate(" + x(d.n_asp) + ",0)";
+                        });
 
-                N_r.selectAll("rect")
-                .data(function (d) {
-                    return d.ages;
-                })
-                .enter().append("rect")
-                .attr("width", 2)
-                .attr("transform", "translate(" + x.rangeBand() / 2 + "," + 0 + ")")
-                .attr("y", function (d) {
-                    return y(d.y1);
-                })
-                .attr("height", function (d) {
-                    return y(d.y0) - y(d.y1);
-                })
-                .style("fill", function (d) {
-                    return color(d.name);
-                });
+                n_asp.selectAll("rect")
+                        .data(function (d) {
+                            return d.ages;
+                        })
+                        .enter().append("rect")
+                        .attr("width", 2)
+                        .attr("transform", "translate(" + x.rangeBand() / 2 + "," + 0 + ")")
+                        .attr("y", function (d) {
+                            return y(d.y1);
+                        })
+                        .attr("height", function (d) {
+                            return y(d.y0) - y(d.y1);
+                        })
+                        .style("fill", function (d) {
+                            return color(d.name);
+                        });
 
-                N_r.selectAll("text")
-                .data(function (d) {
-                    return d.ages;
-                })
-                .enter()
-                .append("text")
-                .attr("x", x.rangeBand() / 2)
-                .attr("y", function (d, i) {
-                    return y(d.y1) + (y(d.y0) - y(d.y1)) * 0;
-                })
-                .style("text-anchor", "top")
-                .text(function (d) {
-                    return d.y1 - d.y0
-                });
+                n_asp.selectAll("text")
+                        .data(function (d) {
+                            return d.ages;
+                        })
+                        .enter()
+                        .append("text")
+                        .attr("x", x.rangeBand() / 2)
+                        .attr("y", function (d, i) {
+                            return y(d.y1) + (y(d.y0) - y(d.y1)) * 0;
+                        })
+                        .style("text-anchor", "top")
+                        .text(function (d) {
+                            return d.y1 - d.y0
+                        });
 
                 var legend = chart5.selectAll(".legend")
-                .data(color.domain().slice().reverse())
-                .enter().append("g")
-                .attr("class", "legend")
-                .attr("transform", function (d, i) {
-                    return "translate(0," + i * 20 + ")";
-                });
+                        .data(color.domain().slice().reverse())
+                        .enter().append("g")
+                        .attr("class", "legend")
+                        .attr("transform", function (d, i) {
+                            return "translate(0," + i * 20 + ")";
+                        });
 
                 legend.append("rect")
-                .attr("x", width - 18)
-                .attr("width", 18)
-                .attr("height", 18)
-                .style("fill", color);
+                        .attr("x", width - 18)
+                        .attr("width", 18)
+                        .attr("height", 18)
+                        .style("fill", color);
 
                 legend.append("text")
-                .attr("x", width - 24)
-                .attr("y", 9)
-                .attr("dy", ".35em")
-                .style("text-anchor", "end")
-                .text(function (d) {
-                    return d;
-                });
+                        .attr("x", width - 24)
+                        .attr("y", 9)
+                        .attr("dy", ".35em")
+                        .style("text-anchor", "end")
+                        .text(function (d) {
+                            return d;
+                        });
 
             });
         </script>
     </div>
-
-    <div class="cell" id="N_pe_div">
+    <div class="cell" id="n_Pe_div">
         <script>
 
             var margin = {top: 10, right: 20, bottom: 30, left: 10},
-            width = 700 - margin.left - margin.right,
-            height = 250 - margin.top - margin.bottom;
+                    width = 700 - margin.left - margin.right,
+                    height = 250 - margin.top - margin.bottom;
 
             var x = d3.scale.ordinal()
-            .rangeRoundBands([0, width], .1);
+                    .rangeRoundBands([0, width], .1);
 
             var y = d3.scale.linear()
-            .rangeRound([height, 0]);
+                    .rangeRound([height, 0]);
 
             var color = d3.scale.category10();
 
             var xAxis = d3.svg.axis()
-            .scale(x)
-            .orient("bottom");
+                    .scale(x)
+                    .orient("bottom");
 
             var yAxis = d3.svg.axis()
-            .scale(y)
-            .orient("left")
-            .tickFormat(d3.format(".2s"));
+                    .scale(y)
+                    .orient("left")
+                    .tickFormat(d3.format(".2s"));
 
-            var chart6 = d3.select("#N_pe_div").append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+            var chart6 = d3.select("#n_Pe_div").append("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-            d3.csv("N_Pe.csv", function (error, data) {
+            d3.csv("n_Pe.csv", function (error, data) {
                 if (error) throw error;
 
                 color.domain(d3.keys(data[0]).filter(function (key) {
-                    return key !== "N_Pe";
+                    return key !== "n_Pe";
                 }));
 
                 data.forEach(function (d) {
@@ -823,145 +772,134 @@
                 });
 
                 x.domain(data.map(function (d) {
-                    return d.N_Pe;
+                    return d.n_Pe;
                 }));
-                y.domain([0, 175]);
+                y.domain([0, 125]);
 
                 chart6.append("g")
-                .attr("class", "x axis")
-                .attr("transform", "translate(0," + height + ")")
-                .call(xAxis)
-                .style("fill", function (d) {
-                    if (data < 0) {
-                        return "red"
-                    }
-                    else {
-                        return "black"
-                    }
-                });
-
-                // chart6.append("g")
-                //         // .attr("class", "y axis")
-                //         // .call(yAxis)
-                //         .append("text")
-                //         .attr("transform", "rotate(-90)")
-                //         .attr("y", 6)
-                //         .attr("dy", ".71em")
-                //         .style("text-anchor", "end")
-                //         .text("Peclet");
+                        .attr("class", "x axis")
+                        .attr("transform", "translate(0," + height + ")")
+                        .call(xAxis)
+                        .style("fill", function (d) {
+                            if (data < 0) {
+                                return "red"
+                            }
+                            else {
+                                return "black"
+                            }
+                        });
 
                 chart6.append("g")
-                .attr("class", "x axis")
-                .append("text")
-                .attr("transform", "rotate(-0)")
-                .attr("x", 6)
-                .attr("dx", (width - margin.left - margin.right) / 2)
-                .attr("dy", "0em")
-                .style("text-anchor", "left")
-                .text("Peclet Number");
+                        .attr("class", "x axis")
+                        .append("text")
+                        .attr("transform", "rotate(-0)")
+                        .attr("x", 6)
+                        .attr("dx", (width - margin.left - margin.right) / 2)
+                        .attr("dy", "0em")
+                        .style("text-anchor", "left")
+                        .text("Peclet Number");
 
-                var N_Pe = chart6.selectAll(".N_Pe")
-                .data(data)
-                .enter().append("g")
-                .attr("class", "g")
-                .attr("transform", function (d) {
-                    return "translate(" + x(d.N_Pe) + ",0)";
-                });
+                var n_Pe = chart6.selectAll(".n_Pe")
+                        .data(data)
+                        .enter().append("g")
+                        .attr("class", "g")
+                        .attr("transform", function (d) {
+                            return "translate(" + x(d.n_Pe) + ",0)";
+                        });
 
-                N_Pe.selectAll("rect")
-                .data(function (d) {
-                    return d.ages;
-                })
-                .enter().append("rect")
-                .attr("width", 2)
-                .attr("transform", "translate(" + x.rangeBand() / 2 + "," + 0 + ")")
-                .attr("y", function (d) {
-                    return y(d.y1);
-                })
-                .attr("height", function (d) {
-                    return y(d.y0) - y(d.y1);
-                })
-                .style("fill", function (d) {
-                    return color(d.name);
-                });
+                n_Pe.selectAll("rect")
+                        .data(function (d) {
+                            return d.ages;
+                        })
+                        .enter().append("rect")
+                        .attr("width", 2)
+                        .attr("transform", "translate(" + x.rangeBand() / 2 + "," + 0 + ")")
+                        .attr("y", function (d) {
+                            return y(d.y1);
+                        })
+                        .attr("height", function (d) {
+                            return y(d.y0) - y(d.y1);
+                        })
+                        .style("fill", function (d) {
+                            return color(d.name);
+                        });
 
-                N_Pe.selectAll("text")
-                .data(function (d) {
-                    return d.ages;
-                })
-                .enter()
-                .append("text")
-                .attr("x", x.rangeBand() / 2)
-                .attr("y", function (d, i) {
-                    return y(d.y1) + (y(d.y0) - y(d.y1)) * 0;
-                })
-                .style("text-anchor", "top")
-                .text(function (d) {
-                    return d.y1 - d.y0
-                });
+                n_Pe.selectAll("text")
+                        .data(function (d) {
+                            return d.ages;
+                        })
+                        .enter()
+                        .append("text")
+                        .attr("x", x.rangeBand() / 2)
+                        .attr("y", function (d, i) {
+                            return y(d.y1) + (y(d.y0) - y(d.y1)) * 0;
+                        })
+                        .style("text-anchor", "top")
+                        .text(function (d) {
+                            return d.y1 - d.y0
+                        });
 
                 var legend = chart6.selectAll(".legend")
-                .data(color.domain().slice().reverse())
-                .enter().append("g")
-                .attr("class", "legend")
-                .attr("transform", function (d, i) {
-                    return "translate(0," + i * 20 + ")";
-                });
+                        .data(color.domain().slice().reverse())
+                        .enter().append("g")
+                        .attr("class", "legend")
+                        .attr("transform", function (d, i) {
+                            return "translate(0," + i * 20 + ")";
+                        });
 
                 legend.append("rect")
-                .attr("x", width - 18)
-                .attr("width", 18)
-                .attr("height", 18)
-                .style("fill", color);
+                        .attr("x", width - 18)
+                        .attr("width", 18)
+                        .attr("height", 18)
+                        .style("fill", color);
 
                 legend.append("text")
-                .attr("x", width - 24)
-                .attr("y", 9)
-                .attr("dy", ".35em")
-                .style("text-anchor", "end")
-                .text(function (d) {
-                    return d;
-                });
+                        .attr("x", width - 24)
+                        .attr("y", 9)
+                        .attr("dy", ".35em")
+                        .style("text-anchor", "end")
+                        .text(function (d) {
+                            return d;
+                        });
 
             });
         </script>
     </div>
-    
-    <div class="cell" id="N_att_div">
+    <div class="cell" id="n_att_div">
         <script>
 
             var margin = {top: 10, right: 20, bottom: 30, left: 10},
-            width = 700 - margin.left - margin.right,
-            height = 250 - margin.top - margin.bottom;
+                    width = 700 - margin.left - margin.right,
+                    height = 250 - margin.top - margin.bottom;
 
             var x = d3.scale.ordinal()
-            .rangeRoundBands([0, width], .1);
+                    .rangeRoundBands([0, width], .1);
 
             var y = d3.scale.linear()
-            .rangeRound([height, 0]);
+                    .rangeRound([height, 0]);
 
             var color = d3.scale.category10();
 
             var xAxis = d3.svg.axis()
-            .scale(x)
-            .orient("bottom");
+                    .scale(x)
+                    .orient("bottom");
 
             var yAxis = d3.svg.axis()
-            .scale(y)
-            .orient("left")
-            .tickFormat(d3.format(".2s"));
+                    .scale(y)
+                    .orient("left")
+                    .tickFormat(d3.format(".2s"));
 
-            var chart7 = d3.select("#N_att_div").append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+            var chart7 = d3.select("#n_att_div").append("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-            d3.csv("N_a.csv", function (error, data) {
+            d3.csv("n_att.csv", function (error, data) {
                 if (error) throw error;
 
                 color.domain(d3.keys(data[0]).filter(function (key) {
-                    return key !== "N_a";
+                    return key !== "n_att";
                 }));
 
                 data.forEach(function (d) {
@@ -973,144 +911,134 @@
                 });
 
                 x.domain(data.map(function (d) {
-                    return d.N_a;
+                    return d.n_att;
                 }));
-                y.domain([0, 175]);
+                y.domain([0, 125]);
 
                 chart7.append("g")
-                .attr("class", "x axis")
-                .attr("transform", "translate(0," + height + ")")
-                .call(xAxis)
-                .style("fill", function (d) {
-                    if (data < 0) {
-                        return "red"
-                    }
-                    else {
-                        return "black"
-                    }
-                });
-
-                // chart6.append("g")
-                //         // .attr("class", "y axis")
-                //         // .call(yAxis)
-                //         .append("text")
-                //         .attr("transform", "rotate(-90)")
-                //         .attr("y", 6)
-                //         .attr("dy", ".71em")
-                //         .style("text-anchor", "end")
-                //         .text("Peclet");
+                        .attr("class", "x axis")
+                        .attr("transform", "translate(0," + height + ")")
+                        .call(xAxis)
+                        .style("fill", function (d) {
+                            if (data < 0) {
+                                return "red"
+                            }
+                            else {
+                                return "black"
+                            }
+                        });
 
                 chart7.append("g")
-                .attr("class", "x axis")
-                .append("text")
-                .attr("transform", "rotate(-0)")
-                .attr("x", 6)
-                .attr("dx", (width - margin.left - margin.right) / 2)
-                .attr("dy", "0em")
-                .style("text-anchor", "left")
-                .text("Attraction Number");
+                        .attr("class", "x axis")
+                        .append("text")
+                        .attr("transform", "rotate(-0)")
+                        .attr("x", 6)
+                        .attr("dx", (width - margin.left - margin.right) / 2)
+                        .attr("dy", "0em")
+                        .style("text-anchor", "left")
+                        .text("Attraction Number");
 
-                var N_a = chart7.selectAll(".N_a")
-                .data(data)
-                .enter().append("g")
-                .attr("class", "g")
-                .attr("transform", function (d) {
-                    return "translate(" + x(d.N_a) + ",0)";
-                });
+                var n_att = chart7.selectAll(".n_att")
+                        .data(data)
+                        .enter().append("g")
+                        .attr("class", "g")
+                        .attr("transform", function (d) {
+                            return "translate(" + x(d.n_att) + ",0)";
+                        });
 
-                N_a.selectAll("rect")
-                .data(function (d) {
-                    return d.ages;
-                })
-                .enter().append("rect")
-                .attr("width", 2)
-                .attr("transform", "translate(" + x.rangeBand() / 2 + "," + 0 + ")")
-                .attr("y", function (d) {
-                    return y(d.y1);
-                })
-                .attr("height", function (d) {
-                    return y(d.y0) - y(d.y1);
-                })
-                .style("fill", function (d) {
-                    return color(d.name);
-                });
+                n_att.selectAll("rect")
+                        .data(function (d) {
+                            return d.ages;
+                        })
+                        .enter().append("rect")
+                        .attr("width", 2)
+                        .attr("transform", "translate(" + x.rangeBand() / 2 + "," + 0 + ")")
+                        .attr("y", function (d) {
+                            return y(d.y1);
+                        })
+                        .attr("height", function (d) {
+                            return y(d.y0) - y(d.y1);
+                        })
+                        .style("fill", function (d) {
+                            return color(d.name);
+                        });
 
-                N_a.selectAll("text")
-                .data(function (d) {
-                    return d.ages;
-                })
-                .enter()
-                .append("text")
-                .attr("x", x.rangeBand() / 2)
-                .attr("y", function (d, i) {
-                    return y(d.y1) + (y(d.y0) - y(d.y1)) * 0;
-                })
-                .style("text-anchor", "top")
-                .text(function (d) {
-                    return d.y1
-                });
+                n_att.selectAll("text")
+                        .data(function (d) {
+                            return d.ages;
+                        })
+                        .enter()
+                        .append("text")
+                        .attr("x", x.rangeBand() / 2)
+                        .attr("y", function (d, i) {
+                            return y(d.y1) + (y(d.y0) - y(d.y1)) * 0;
+                        })
+                        .style("text-anchor", "top")
+                        .text(function (d) {
+                            return d.y1 - d.y0
+                        });
 
                 var legend = chart7.selectAll(".legend")
-                .data(color.domain().slice().reverse())
-                .enter().append("g")
-                .attr("class", "legend")
-                .attr("transform", function (d, i) {
-                    return "translate(0," + i * 20 + ")";
-                });
+                        .data(color.domain().slice().reverse())
+                        .enter().append("g")
+                        .attr("class", "legend")
+                        .attr("transform", function (d, i) {
+                            return "translate(0," + i * 20 + ")";
+                        });
 
                 legend.append("rect")
-                .attr("x", width - 18)
-                .attr("width", 18)
-                .attr("height", 18)
-                .style("fill", color);
+                        .attr("x", width - 18)
+                        .attr("width", 18)
+                        .attr("height", 18)
+                        .style("fill", color);
 
                 legend.append("text")
-                .attr("x", width - 24)
-                .attr("y", 9)
-                .attr("dy", ".35em")
-                .style("text-anchor", "end")
-                .text(function (d) {
-                    return d;
-                });
+                        .attr("x", width - 24)
+                        .attr("y", 9)
+                        .attr("dy", ".35em")
+                        .style("text-anchor", "end")
+                        .text(function (d) {
+                            return d;
+                        });
 
             });
         </script>
     </div>
-    <div class="cell" id="N_lon_div">
+    <div class="cell" id="n_Lon_div">
         <script>
 
             var margin = {top: 10, right: 20, bottom: 30, left: 10},
-            width = 700 - margin.left - margin.right,
-            height = 250 - margin.top - margin.bottom;
+                    width = 700 - margin.left - margin.right,
+                    height = 250 - margin.top - margin.bottom;
 
             var x = d3.scale.ordinal()
-            .rangeRoundBands([0, width], .1);
+                    .rangeRoundBands([0, width], .1);
 
             var y = d3.scale.linear()
-            .rangeRound([height, 0]);
+                    .rangeRound([height, 0]);
 
             var color = d3.scale.category10();
 
             var xAxis = d3.svg.axis()
-            .scale(x)
-            .orient("bottom");
+                    .scale(x)
+                    .orient("bottom");
 
             var yAxis = d3.svg.axis()
-            .scale(y)
-            .orient("left")
-            .tickFormat(d3.format(".2s"));
+                    .scale(y)
+                    .orient("left")
+                    .tickFormat(d3.format(".2s"));
 
-            var chart8 = d3.select("#N_lon_div").append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+            var chart8 = d3.select("#n_Lon_div").append("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-            d3.csv("N_Lo.csv", function (error, data) {
+            d3.csv("n_Lo.csv", function (error, data) {
                 if (error) throw error;
 
                 color.domain(d3.keys(data[0]).filter(function (key) {
-                    return key !== "N_Lo";
+                    return key !== "n_Lo";
                 }));
 
                 data.forEach(function (d) {
@@ -1122,443 +1050,413 @@
                 });
 
                 x.domain(data.map(function (d) {
-                    return d.N_Lo;
+                    return d.n_Lo;
                 }));
-                y.domain([0, 175]);
+                y.domain([0, 125]);
 
                 chart8.append("g")
-                .attr("class", "x axis")
-                .attr("transform", "translate(0," + height + ")")
-                .call(xAxis)
-                .style("fill", function (d) {
-                    if (data < 0) {
-                        return "red"
-                    }
-                    else {
-                        return "black"
-                    }
-                });
-
-                // chart8.append("g")
-                //         // .attr("class", "y axis")
-                //         // .call(yAxis)
-                //         .append("text")
-                //         .attr("transform", "rotate(-90)")
-                //         .attr("y", 6)
-                //         .attr("dy", ".71em")
-                //         .style("text-anchor", "end")
-                //         .text("Peclet");
+                        .attr("class", "x axis")
+                        .attr("transform", "translate(0," + height + ")")
+                        .call(xAxis)
+                        .style("fill", function (d) {
+                            if (data < 0) {
+                                return "red"
+                            }
+                            else {
+                                return "black"
+                            }
+                        });
 
                 chart8.append("g")
-                .attr("class", "x axis")
-                .append("text")
-                .attr("transform", "rotate(-0)")
-                .attr("x", 6)
-                .attr("dx", (width - margin.left - margin.right) / 2)
-                .attr("dy", "0em")
-                .style("text-anchor", "left")
-                .text("London Force Parameter Number");
+                        .attr("class", "x axis")
+                        .append("text")
+                        .attr("transform", "rotate(-0)")
+                        .attr("x", 6)
+                        .attr("dx", (width - margin.left - margin.right) / 2)
+                        .attr("dy", "0em")
+                        .style("text-anchor", "left")
+                        .text("London Force Parameter Number");
 
-                var N_Lo = chart8.selectAll(".N_Lo")
-                .data(data)
-                .enter().append("g")
-                .attr("class", "g")
-                .attr("transform", function (d) {
-                    return "translate(" + x(d.N_Lo) + ",0)";
-                });
+                var n_Lo = chart8.selectAll(".n_Lo")
+                        .data(data)
+                        .enter().append("g")
+                        .attr("class", "g")
+                        .attr("transform", function (d) {
+                            return "translate(" + x(d.n_Lo) + ",0)";
+                        });
 
-                N_Lo.selectAll("rect")
-                .data(function (d) {
-                    return d.ages;
-                })
-                .enter().append("rect")
-                .attr("width", 2)
-                .attr("transform", "translate(" + x.rangeBand() / 2 + "," + 0 + ")")
-                .attr("y", function (d) {
-                    return y(d.y1);
-                })
-                .attr("height", function (d) {
-                    return y(d.y0) - y(d.y1);
-                })
-                .style("fill", function (d) {
-                    return color(d.name);
-                });
+                n_Lo.selectAll("rect")
+                        .data(function (d) {
+                            return d.ages;
+                        })
+                        .enter().append("rect")
+                        .attr("width", 2)
+                        .attr("transform", "translate(" + x.rangeBand() / 2 + "," + 0 + ")")
+                        .attr("y", function (d) {
+                            return y(d.y1);
+                        })
+                        .attr("height", function (d) {
+                            return y(d.y0) - y(d.y1);
+                        })
+                        .style("fill", function (d) {
+                            return color(d.name);
+                        });
 
-                N_Lo.selectAll("text")
-                .data(function (d) {
-                    return d.ages;
-                })
-                .enter()
-                .append("text")
-                .attr("x", x.rangeBand() / 2)
-                .attr("y", function (d, i) {
-                    return y(d.y1) + (y(d.y0) - y(d.y1)) * 0;
-                })
-                .style("text-anchor", "top")
-                .text(function (d) {
-                    return d.y1 - d.y0
-                });
+                n_Lo.selectAll("text")
+                        .data(function (d) {
+                            return d.ages;
+                        })
+                        .enter()
+                        .append("text")
+                        .attr("x", x.rangeBand() / 2)
+                        .attr("y", function (d, i) {
+                            return y(d.y1) + (y(d.y0) - y(d.y1)) * 0;
+                        })
+                        .style("text-anchor", "top")
+                        .text(function (d) {
+                            return d.y1 - d.y0
+                        });
 
                 var legend = chart8.selectAll(".legend")
-                .data(color.domain().slice().reverse())
-                .enter().append("g")
-                .attr("class", "legend")
-                .attr("transform", function (d, i) {
-                    return "translate(0," + i * 20 + ")";
-                });
+                        .data(color.domain().slice().reverse())
+                        .enter().append("g")
+                        .attr("class", "legend")
+                        .attr("transform", function (d, i) {
+                            return "translate(0," + i * 20 + ")";
+                        });
 
                 legend.append("rect")
-                .attr("x", width - 18)
-                .attr("width", 18)
-                .attr("height", 18)
-                .style("fill", color);
+                        .attr("x", width - 18)
+                        .attr("width", 18)
+                        .attr("height", 18)
+                        .style("fill", color);
 
                 legend.append("text")
-                .attr("x", width - 24)
-                .attr("y", 9)
-                .attr("dy", ".35em")
-                .style("text-anchor", "end")
-                .text(function (d) {
-                    return d;
-                });
+                        .attr("x", width - 24)
+                        .attr("y", 9)
+                        .attr("dy", ".35em")
+                        .style("text-anchor", "end")
+                        .text(function (d) {
+                            return d;
+                        });
 
             });
         </script>
     </div>
     <div class="cell" id="N_por_div">
-       <script>
+        <script>
 
-        var margin = {top: 10, right: 20, bottom: 30, left: 10},
-        width = 700 - margin.left - margin.right,
-        height = 250 - margin.top - margin.bottom;
+            var margin = {top: 10, right: 20, bottom: 30, left: 10},
+                    width = 700 - margin.left - margin.right,
+                    height = 250 - margin.top - margin.bottom;
 
-        var x = d3.scale.ordinal()
-        .rangeRoundBands([0, width], .1);
+            var x = d3.scale.ordinal()
+                    .rangeRoundBands([0, width], .1);
 
-        var y = d3.scale.linear()
-        .rangeRound([height, 0]);
+            var y = d3.scale.linear()
+                    .rangeRound([height, 0]);
 
-        var color = d3.scale.category10();
+            var color = d3.scale.category10();
 
-        var xAxis = d3.svg.axis()
-        .scale(x)
-        .orient("bottom");
+            var xAxis = d3.svg.axis()
+                    .scale(x)
+                    .orient("bottom");
 
-        var yAxis = d3.svg.axis()
-        .scale(y)
-        .orient("left")
-        .tickFormat(d3.format(".2s"));
+            var yAxis = d3.svg.axis()
+                    .scale(y)
+                    .orient("left")
+                    .tickFormat(d3.format(".2s"));
 
-        var chart9 = d3.select("#N_por_div").append("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
-        .append("g")
-        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+            var chart9 = d3.select("#N_por_div").append("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-        d3.csv("N_as.csv", function (error, data) {
-            if (error) throw error;
+            d3.csv("n_por.csv", function (error, data) {
+                if (error) throw error;
 
-            color.domain(d3.keys(data[0]).filter(function (key) {
-                return key !== "N_as";
-            }));
+                color.domain(d3.keys(data[0]).filter(function (key) {
+                    return key !== "n_por";
+                }));
 
-            data.forEach(function (d) {
-                var y0 = 0;
-                d.ages = color.domain().map(function (name) {
-                    return {name: name, y0: y0, y1: y0 += +d[name]};
+                data.forEach(function (d) {
+                    var y0 = 0;
+                    d.ages = color.domain().map(function (name) {
+                        return {name: name, y0: y0, y1: y0 += +d[name]};
+                    });
+                    d.total = d.ages[d.ages.length - 1].y1;
                 });
-                d.total = d.ages[d.ages.length - 1].y1;
-            });
 
-            x.domain(data.map(function (d) {
-                return d.N_as;
-            }));
-            y.domain([0, 175]);
-
-            chart9.append("g")
-            .attr("class", "x axis")
-            .attr("transform", "translate(0," + height + ")")
-            .call(xAxis)
-            .style("fill", function (d) {
-                if (data < 0) {
-                    return "red"
-                }
-                else {
-                    return "black"
-                }
-            });
-
-                // chart8.append("g")
-                //         // .attr("class", "y axis")
-                //         // .call(yAxis)
-                //         .append("text")
-                //         .attr("transform", "rotate(-90)")
-                //         .attr("y", 6)
-                //         .attr("dy", ".71em")
-                //         .style("text-anchor", "end")
-                //         .text("Peclet");
+                x.domain(data.map(function (d) {
+                    return d.n_por;
+                }));
+                y.domain([0, 125]);
 
                 chart9.append("g")
-                .attr("class", "x axis")
-                .append("text")
-                .attr("transform", "rotate(-0)")
-                .attr("x", 6)
-                .attr("dx", (width - margin.left - margin.right) / 2)
-                .attr("dy", "0em")
-                .style("text-anchor", "left")
-                .text("Porosity Dependant Parameter");
+                        .attr("class", "x axis")
+                        .attr("transform", "translate(0," + height + ")")
+                        .call(xAxis)
+                        .style("fill", function (d) {
+                            if (data < 0) {
+                                return "red"
+                            }
+                            else {
+                                return "black"
+                            }
+                        });
 
-                var N_as = chart9.selectAll(".N_as")
-                .data(data)
-                .enter().append("g")
-                .attr("class", "g")
-                .attr("transform", function (d) {
-                    return "translate(" + x(d.N_as) + ",0)";
-                });
+                chart9.append("g")
+                        .attr("class", "x axis")
+                        .append("text")
+                        .attr("transform", "rotate(-0)")
+                        .attr("x", 6)
+                        .attr("dx", (width - margin.left - margin.right) / 2)
+                        .attr("dy", "0em")
+                        .style("text-anchor", "left")
+                        .text("Porosity Dependant Parameter");
 
-                N_as.selectAll("rect")
-                .data(function (d) {
-                    return d.ages;
-                })
-                .enter().append("rect")
-                .attr("width", 2)
-                .attr("transform", "translate(" + x.rangeBand() / 2 + "," + 0 + ")")
-                .attr("y", function (d) {
-                    return y(d.y1);
-                })
-                .attr("height", function (d) {
-                    return y(d.y0) - y(d.y1);
-                })
-                .style("fill", function (d) {
-                    return color(d.name);
-                });
+                var n_por = chart9.selectAll(".n_por")
+                        .data(data)
+                        .enter().append("g")
+                        .attr("class", "g")
+                        .attr("transform", function (d) {
+                            return "translate(" + x(d.n_por) + ",0)";
+                        });
 
-                N_as.selectAll("text")
-                .data(function (d) {
-                    return d.ages;
-                })
-                .enter()
-                .append("text")
-                .attr("x", x.rangeBand() / 2)
-                .attr("y", function (d, i) {
-                    return y(d.y1) + (y(d.y0) - y(d.y1)) * 0;
-                })
-                .style("text-anchor", "top")
-                .text(function (d) {
-                    return d.y1- d.y0
-                });
+                n_por.selectAll("rect")
+                        .data(function (d) {
+                            return d.ages;
+                        })
+                        .enter().append("rect")
+                        .attr("width", 2)
+                        .attr("transform", "translate(" + x.rangeBand() / 2 + "," + 0 + ")")
+                        .attr("y", function (d) {
+                            return y(d.y1);
+                        })
+                        .attr("height", function (d) {
+                            return y(d.y0) - y(d.y1);
+                        })
+                        .style("fill", function (d) {
+                            return color(d.name);
+                        });
+
+                n_por.selectAll("text")
+                        .data(function (d) {
+                            return d.ages;
+                        })
+                        .enter()
+                        .append("text")
+                        .attr("x", x.rangeBand() / 2)
+                        .attr("y", function (d, i) {
+                            return y(d.y1) + (y(d.y0) - y(d.y1)) * 0;
+                        })
+                        .style("text-anchor", "top")
+                        .text(function (d) {
+                            return d.y1 - d.y0
+                        });
 
                 var legend = chart9.selectAll(".legend")
-                .data(color.domain().slice().reverse())
-                .enter().append("g")
-                .attr("class", "legend")
-                .attr("transform", function (d, i) {
-                    return "translate(0," + i * 20 + ")";
-                });
+                        .data(color.domain().slice().reverse())
+                        .enter().append("g")
+                        .attr("class", "legend")
+                        .attr("transform", function (d, i) {
+                            return "translate(0," + i * 20 + ")";
+                        });
 
                 legend.append("rect")
-                .attr("x", width - 18)
-                .attr("width", 18)
-                .attr("height", 18)
-                .style("fill", color);
+                        .attr("x", width - 18)
+                        .attr("width", 18)
+                        .attr("height", 18)
+                        .style("fill", color);
 
                 legend.append("text")
-                .attr("x", width - 24)
-                .attr("y", 9)
-                .attr("dy", ".35em")
-                .style("text-anchor", "end")
-                .text(function (d) {
-                    return d;
-                });
+                        .attr("x", width - 24)
+                        .attr("y", 9)
+                        .attr("dy", ".35em")
+                        .style("text-anchor", "end")
+                        .text(function (d) {
+                            return d;
+                        });
 
             });
         </script>
     </div>
-    <div class="cell" id="N_aspc_div">
-       <script>
+    <div class="cell" id="n_aspc_div">
+        <script>
 
-        var margin = {top: 10, right: 20, bottom: 30, left: 10},
-        width = 700 - margin.left - margin.right,
-        height = 250 - margin.top - margin.bottom;
+            var margin = {top: 10, right: 20, bottom: 30, left: 10},
+                    width = 700 - margin.left - margin.right,
+                    height = 250 - margin.top - margin.bottom;
 
-        var x = d3.scale.ordinal()
-        .rangeRoundBands([0, width], .1);
+            var x = d3.scale.ordinal()
+                    .rangeRoundBands([0, width], .1);
 
-        var y = d3.scale.linear()
-        .rangeRound([height, 0]);
+            var y = d3.scale.linear()
+                    .rangeRound([height, 0]);
 
-        var color = d3.scale.category10();
+            var color = d3.scale.category10();
 
-        var xAxis = d3.svg.axis()
-        .scale(x)
-        .orient("bottom");
+            var xAxis = d3.svg.axis()
+                    .scale(x)
+                    .orient("bottom");
 
-        var yAxis = d3.svg.axis()
-        .scale(y)
-        .orient("left")
-        .tickFormat(d3.format(".2s"));
+            var yAxis = d3.svg.axis()
+                    .scale(y)
+                    .orient("left")
+                    .tickFormat(d3.format(".2s"));
 
-        var chart10 = d3.select("#N_aspc_div").append("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
-        .append("g")
-        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+            var chart10 = d3.select("#n_aspc_div").append("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-        d3.csv("N_CA.csv", function (error, data) {
-            if (error) throw error;
+            d3.csv("n_asp_c.csv", function (error, data) {
+                if (error) throw error;
 
-            color.domain(d3.keys(data[0]).filter(function (key) {
-                return key !== "N_CA";
-            }));
+                color.domain(d3.keys(data[0]).filter(function (key) {
+                    return key !== "n_asp_c";
+                }));
 
-            data.forEach(function (d) {
-                var y0 = 0;
-                d.ages = color.domain().map(function (name) {
-                    return {name: name, y0: y0, y1: y0 += +d[name]};
+                data.forEach(function (d) {
+                    var y0 = 0;
+                    d.ages = color.domain().map(function (name) {
+                        return {name: name, y0: y0, y1: y0 += +d[name]};
+                    });
+                    d.total = d.ages[d.ages.length - 1].y1;
                 });
-                d.total = d.ages[d.ages.length - 1].y1;
-            });
 
-            x.domain(data.map(function (d) {
-                return d.N_CA;
-            }));
-            y.domain([0, 175]);
-
-            chart10.append("g")
-            .attr("class", "x axis")
-            .attr("transform", "translate(0," + height + ")")
-            .call(xAxis)
-            .style("fill", function (d) {
-                if (data < 0) {
-                    return "red"
-                }
-                else {
-                    return "black"
-                }
-            });
-
-                // chart8.append("g")
-                //         // .attr("class", "y axis")
-                //         // .call(yAxis)
-                //         .append("text")
-                //         .attr("transform", "rotate(-90)")
-                //         .attr("y", 6)
-                //         .attr("dy", ".71em")
-                //         .style("text-anchor", "end")
-                //         .text("Peclet");
+                x.domain(data.map(function (d) {
+                    return d.n_asp_c;
+                }));
+                y.domain([0, 125]);
 
                 chart10.append("g")
-                .attr("class", "x axis")
-                .append("text")
-                .attr("transform", "rotate(-0)")
-                .attr("x", 6)
-                .attr("dx", (width - margin.left - margin.right) / 2)
-                .attr("dy", "0em")
-                .style("text-anchor", "left")
-                .text("Column Aspect Ratio");
+                        .attr("class", "x axis")
+                        .attr("transform", "translate(0," + height + ")")
+                        .call(xAxis)
+                        .style("fill", function (d) {
+                            if (data < 0) {
+                                return "red"
+                            }
+                            else {
+                                return "black"
+                            }
+                        });
 
-                var N_CA = chart10.selectAll(".N_CA")
-                .data(data)
-                .enter().append("g")
-                .attr("class", "g")
-                .attr("transform", function (d) {
-                    return "translate(" + x(d.N_CA) + ",0)";
-                });
 
-                N_CA.selectAll("rect")
-                .data(function (d) {
-                    return d.ages;
-                })
-                .enter().append("rect")
-                .attr("width", 2)
-                .attr("transform", "translate(" + x.rangeBand() / 2 + "," + 0 + ")")
-                .attr("y", function (d) {
-                    return y(d.y1);
-                })
-                .attr("height", function (d) {
-                    return y(d.y0) - y(d.y1);
-                })
-                .style("fill", function (d) {
-                    return color(d.name);
-                });
+                chart10.append("g")
+                        .attr("class", "x axis")
+                        .append("text")
+                        .attr("transform", "rotate(-0)")
+                        .attr("x", 6)
+                        .attr("dx", (width - margin.left - margin.right) / 2)
+                        .attr("dy", "0em")
+                        .style("text-anchor", "left")
+                        .text("Column Aspect Ratio");
 
-                N_CA.selectAll("text")
-                .data(function (d) {
-                    return d.ages;
-                })
-                .enter()
-                .append("text")
-                .attr("x", x.rangeBand() / 2)
-                .attr("y", function (d, i) {
-                    return y(d.y1) + (y(d.y0) - y(d.y1)) * 0;
-                })
-                .style("text-anchor", "top")
-                .text(function (d) {
-                    return d.y1- d.y0
-                });
+                var n_asp_c = chart10.selectAll(".n_asp_c")
+                        .data(data)
+                        .enter().append("g")
+                        .attr("class", "g")
+                        .attr("transform", function (d) {
+                            return "translate(" + x(d.n_asp_c) + ",0)";
+                        });
+
+                n_asp_c.selectAll("rect")
+                        .data(function (d) {
+                            return d.ages;
+                        })
+                        .enter().append("rect")
+                        .attr("width", 2)
+                        .attr("transform", "translate(" + x.rangeBand() / 2 + "," + 0 + ")")
+                        .attr("y", function (d) {
+                            return y(d.y1);
+                        })
+                        .attr("height", function (d) {
+                            return y(d.y0) - y(d.y1);
+                        })
+                        .style("fill", function (d) {
+                            return color(d.name);
+                        });
+
+                n_asp_c.selectAll("text")
+                        .data(function (d) {
+                            return d.ages;
+                        })
+                        .enter()
+                        .append("text")
+                        .attr("x", x.rangeBand() / 2)
+                        .attr("y", function (d, i) {
+                            return y(d.y1) + (y(d.y0) - y(d.y1)) * 0;
+                        })
+                        .style("text-anchor", "top")
+                        .text(function (d) {
+                            return d.y1 - d.y0
+                        });
 
                 var legend = chart10.selectAll(".legend")
-                .data(color.domain().slice().reverse())
-                .enter().append("g")
-                .attr("class", "legend")
-                .attr("transform", function (d, i) {
-                    return "translate(0," + i * 20 + ")";
-                });
+                        .data(color.domain().slice().reverse())
+                        .enter().append("g")
+                        .attr("class", "legend")
+                        .attr("transform", function (d, i) {
+                            return "translate(0," + i * 20 + ")";
+                        });
 
                 legend.append("rect")
-                .attr("x", width - 18)
-                .attr("width", 18)
-                .attr("height", 18)
-                .style("fill", color);
+                        .attr("x", width - 18)
+                        .attr("width", 18)
+                        .attr("height", 18)
+                        .style("fill", color);
 
                 legend.append("text")
-                .attr("x", width - 24)
-                .attr("y", 9)
-                .attr("dy", ".35em")
-                .style("text-anchor", "end")
-                .text(function (d) {
-                    return d;
-                });
+                        .attr("x", width - 24)
+                        .attr("y", 9)
+                        .attr("dy", ".35em")
+                        .style("text-anchor", "end")
+                        .text(function (d) {
+                            return d;
+                        });
 
             });
         </script>
     </div>
-
     <div class="cell" id="M_inf_div">
         <script>
 
             var margin = {top: 10, right: 20, bottom: 30, left: 10},
-            width = 700 - margin.left - margin.right,
-            height = 250 - margin.top - margin.bottom;
+                    width = 700 - margin.left - margin.right,
+                    height = 250 - margin.top - margin.bottom;
 
             var x = d3.scale.ordinal()
-            .rangeRoundBands([0, width], .1);
+                    .rangeRoundBands([0, width], .1);
 
             var y = d3.scale.linear()
-            .rangeRound([height, 0]);
+                    .rangeRound([height, 0]);
 
             var color = d3.scale.category10();
 
             var xAxis = d3.svg.axis()
-            .scale(x)
-            .orient("bottom");
+                    .scale(x)
+                    .orient("bottom");
 
             var yAxis = d3.svg.axis()
-            .scale(y)
-            .orient("left")
-            .tickFormat(d3.format(".2s"));
+                    .scale(y)
+                    .orient("left")
+                    .tickFormat(d3.format(".2s"));
 
             var chart11 = d3.select("#M_inf_div").append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-            d3.csv("M_inj.csv", function (error, data) {
+            d3.csv("m_inf.csv", function (error, data) {
                 if (error) throw error;
 
                 color.domain(d3.keys(data[0]).filter(function (key) {
-                    return key !== "M_inj";
+                    return key !== "m_inf";
                 }));
 
                 data.forEach(function (d) {
@@ -1570,146 +1468,135 @@
                 });
 
                 x.domain(data.map(function (d) {
-                    return d.M_inj;
+                    return d.m_inf;
                 }));
-                y.domain([0, 175]);
+                y.domain([0, 125]);
 
                 chart11.append("g")
-                .attr("class", "x axis")
-                .attr("transform", "translate(0," + height + ")")
-                .call(xAxis)
-                .style("fill", function (d) {
-                    if (data < 0) {
-                        return "red"
-                    }
-                    else {
-                        return "black"
-                    }
-                });
-
-                // chart8.append("g")
-                //         // .attr("class", "y axis")
-                //         // .call(yAxis)
-                //         .append("text")
-                //         .attr("transform", "rotate(-90)")
-                //         .attr("y", 6)
-                //         .attr("dy", ".71em")
-                //         .style("text-anchor", "end")
-                //         .text("Peclet");
+                        .attr("class", "x axis")
+                        .attr("transform", "translate(0," + height + ")")
+                        .call(xAxis)
+                        .style("fill", function (d) {
+                            if (data < 0) {
+                                return "red"
+                            }
+                            else {
+                                return "black"
+                            }
+                        });
 
                 chart11.append("g")
-                .attr("class", "x axis")
-                .append("text")
-                .attr("transform", "rotate(-0)")
-                .attr("x", 6)
-                .attr("dx", (width - margin.left - margin.right) / 2)
-                .attr("dy", "0em")
-                .style("text-anchor", "left")
-                .text("Total Mass of ENMs Pumped Through Soil [mg]");
+                        .attr("class", "x axis")
+                        .append("text")
+                        .attr("transform", "rotate(-0)")
+                        .attr("x", 6)
+                        .attr("dx", (width - margin.left - margin.right) / 2)
+                        .attr("dy", "0em")
+                        .style("text-anchor", "left")
+                        .text("Total Mass of ENMs Pumped Through Soil [mg]");
 
-                var M_inj = chart11.selectAll(".M_inj")
-                .data(data)
-                .enter().append("g")
-                .attr("class", "g")
-                .attr("transform", function (d) {
-                    return "translate(" + x(d.M_inj) + ",0)";
-                });
+                var m_inf = chart11.selectAll(".m_inf")
+                        .data(data)
+                        .enter().append("g")
+                        .attr("class", "g")
+                        .attr("transform", function (d) {
+                            return "translate(" + x(d.m_inf) + ",0)";
+                        });
 
-                M_inj.selectAll("rect")
-                .data(function (d) {
-                    return d.ages;
-                })
-                .enter().append("rect")
-                .attr("width", 2)
-                .attr("transform", "translate(" + x.rangeBand() / 2 + "," + 0 + ")")
-                .attr("y", function (d) {
-                    return y(d.y1);
-                })
-                .attr("height", function (d) {
-                    return y(d.y0) - y(d.y1);
-                })
-                .style("fill", function (d) {
-                    return color(d.name);
-                });
+                m_inf.selectAll("rect")
+                        .data(function (d) {
+                            return d.ages;
+                        })
+                        .enter().append("rect")
+                        .attr("width", 2)
+                        .attr("transform", "translate(" + x.rangeBand() / 2 + "," + 0 + ")")
+                        .attr("y", function (d) {
+                            return y(d.y1);
+                        })
+                        .attr("height", function (d) {
+                            return y(d.y0) - y(d.y1);
+                        })
+                        .style("fill", function (d) {
+                            return color(d.name);
+                        });
 
-                M_inj.selectAll("text")
-                .data(function (d) {
-                    return d.ages;
-                })
-                .enter()
-                .append("text")
-                .attr("x", x.rangeBand() / 2)
-                .attr("y", function (d, i) {
-                    return y(d.y1) + (y(d.y0) - y(d.y1)) * 0;
-                })
-                .style("text-anchor", "top")
-                .text(function (d) {
-                    return d.y1- d.y0
-                });
+                m_inf.selectAll("text")
+                        .data(function (d) {
+                            return d.ages;
+                        })
+                        .enter()
+                        .append("text")
+                        .attr("x", x.rangeBand() / 2)
+                        .attr("y", function (d, i) {
+                            return y(d.y1) + (y(d.y0) - y(d.y1)) * 0;
+                        })
+                        .style("text-anchor", "top")
+                        .text(function (d) {
+                            return d.y1 - d.y0
+                        });
 
                 var legend = chart11.selectAll(".legend")
-                .data(color.domain().slice().reverse())
-                .enter().append("g")
-                .attr("class", "legend")
-                .attr("transform", function (d, i) {
-                    return "translate(0," + i * 20 + ")";
-                });
+                        .data(color.domain().slice().reverse())
+                        .enter().append("g")
+                        .attr("class", "legend")
+                        .attr("transform", function (d, i) {
+                            return "translate(0," + i * 20 + ")";
+                        });
 
                 legend.append("rect")
-                .attr("x", width - 18)
-                .attr("width", 18)
-                .attr("height", 18)
-                .style("fill", color);
+                        .attr("x", width - 18)
+                        .attr("width", 18)
+                        .attr("height", 18)
+                        .style("fill", color);
 
                 legend.append("text")
-                .attr("x", width - 24)
-                .attr("y", 9)
-                .attr("dy", ".35em")
-                .style("text-anchor", "end")
-                .text(function (d) {
-                    return d;
-                });
+                        .attr("x", width - 24)
+                        .attr("y", 9)
+                        .attr("dy", ".35em")
+                        .style("text-anchor", "end")
+                        .text(function (d) {
+                            return d;
+                        });
 
             });
         </script>
 
     </div>
-
     <div class="cell" id="C_inf_div">
         <script>
 
             var margin = {top: 10, right: 20, bottom: 30, left: 10},
-            width = 700 - margin.left - margin.right,
-            height = 250 - margin.top - margin.bottom;
+                    width = 700 - margin.left - margin.right,
+                    height = 250 - margin.top - margin.bottom;
 
             var x = d3.scale.ordinal()
-            .rangeRoundBands([0, width], .1);
+                    .rangeRoundBands([0, width], .1);
 
             var y = d3.scale.linear()
-            .rangeRound([height, 0]);
+                    .rangeRound([height, 0]);
 
             var color = d3.scale.category10();
 
             var xAxis = d3.svg.axis()
-            .scale(x)
-            .orient("bottom");
+                    .scale(x)
+                    .orient("bottom");
 
             var yAxis = d3.svg.axis()
-            .scale(y)
-            .orient("left")
-            .tickFormat(d3.format(".2s"));
+                    .scale(y)
+                    .orient("left")
+                    .tickFormat(d3.format(".2s"));
 
             var chart12 = d3.select("#C_inf_div").append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-            d3.csv("ConcIn.csv", function (error, data) {
+            d3.csv("influent_concentration_enm.csv", function (error, data) {
                 if (error) throw error;
 
                 color.domain(d3.keys(data[0]).filter(function (key) {
-                    return key !== "ConcIn";
+                    return key !== "influent_concentration_enm";
                 }));
 
                 data.forEach(function (d) {
@@ -1721,105 +1608,95 @@
                 });
 
                 x.domain(data.map(function (d) {
-                    return d.ConcIn;
+                    return d.influent_concentration_enm;
                 }));
-                y.domain([0, 175]);
+                y.domain([0, 125]);
 
                 chart12.append("g")
-                .attr("class", "x axis")
-                .attr("transform", "translate(0," + height + ")")
-                .call(xAxis)
-                .style("fill", function (d) {
-                    if (data < 0) {
-                        return "red"
-                    }
-                    else {
-                        return "black"
-                    }
-                });
-
-                // chart8.append("g")
-                //         // .attr("class", "y axis")
-                //         // .call(yAxis)
-                //         .append("text")
-                //         .attr("transform", "rotate(-90)")
-                //         .attr("y", 6)
-                //         .attr("dy", ".71em")
-                //         .style("text-anchor", "end")
-                //         .text("Peclet");
+                        .attr("class", "x axis")
+                        .attr("transform", "translate(0," + height + ")")
+                        .call(xAxis)
+                        .style("fill", function (d) {
+                            if (data < 0) {
+                                return "red"
+                            }
+                            else {
+                                return "black"
+                            }
+                        });
 
                 chart12.append("g")
-                .attr("class", "x axis")
-                .append("text")
-                .attr("transform", "rotate(-0)")
-                .attr("x", 6)
-                .attr("dx", (width - margin.left - margin.right) / 2)
-                .attr("dy", "0em")
-                .style("text-anchor", "left")
-                .text("Concentration of ENMs Pumped Into Soil [mg/L]");
+                        .attr("class", "x axis")
+                        .append("text")
+                        .attr("transform", "rotate(-0)")
+                        .attr("x", 6)
+                        .attr("dx", (width - margin.left - margin.right) / 2)
+                        .attr("dy", "0em")
+                        .style("text-anchor", "left")
+                        .text("Concentration of ENMs Pumped Into Soil [mg/L]");
 
-                var ConcIn = chart12.selectAll(".ConcIn")
-                .data(data)
-                .enter().append("g")
-                .attr("class", "g")
-                .attr("transform", function (d) {
-                    return "translate(" + x(d.ConcIn) + ",0)";
-                });
+                var influent_concentration_enm = chart12.selectAll(".influent_concentration_enm")
+                        .data(data)
+                        .enter().append("g")
+                        .attr("class", "g")
+                        .attr("transform", function (d) {
+                            return "translate(" + x(d.influent_concentration_enm) + ",0)";
+                        });
 
-                ConcIn.selectAll("rect")
-                .data(function (d) {
-                    return d.ages;
-                })
-                .enter().append("rect")
-                .attr("width", 2)
-                .attr("transform", "translate(" + x.rangeBand() / 2 + "," + 0 + ")")
-                .attr("y", function (d) {
-                    return y(d.y1);
-                })
-                .attr("height", function (d) {
-                    return y(d.y0) - y(d.y1);
-                })
-                .style("fill", function (d) {
-                    return color(d.name);
-                });
+                influent_concentration_enm.selectAll("rect")
+                        .data(function (d) {
+                            return d.ages;
+                        })
+                        .enter().append("rect")
+                        .attr("width", 2)
+                        .attr("transform", "translate(" + x.rangeBand() / 2 + "," + 0 + ")")
+                        .attr("y", function (d) {
+                            return y(d.y1);
+                        })
+                        .attr("height", function (d) {
+                            return y(d.y0) - y(d.y1);
+                        })
+                        .style("fill", function (d) {
+                            return color(d.name);
+                        });
 
-                ConcIn.selectAll("text")
-                .data(function (d) {
-                    return d.ages;
-                })
-                .enter()
-                .append("text")
-                .attr("x", x.rangeBand() / 2)
-                .attr("y", function (d, i) {
-                    return y(d.y1) + (y(d.y0) - y(d.y1)) * 0;
-                })
-                .style("text-anchor", "top")
-                .text(function (d) {
-                    return d.y1- d.y0
-                });
+                influent_concentration_enm.selectAll("text")
+                        .data(function (d) {
+                            return d.ages;
+                        })
+                        .enter()
+                        .append("text")
+                        .attr("x", x.rangeBand() / 2)
+                        .attr("y", function (d, i) {
+                            return y(d.y1) + (y(d.y0) - y(d.y1)) * 0;
+                        })
+                        .style("text-anchor", "top")
+                        .text(function (d) {
+                            return d.y1 - d.y0
+                        });
 
                 var legend = chart12.selectAll(".legend")
-                .data(color.domain().slice().reverse())
-                .enter().append("g")
-                .attr("class", "legend")
-                .attr("transform", function (d, i) {
-                    return "translate(0," + i * 20 + ")";
-                });
+                        .data(color.domain().slice().reverse())
+                        .enter().append("g")
+                        .attr("class", "legend")
+                        .attr("transform", function (d, i) {
+                            return "translate(0," + i * 20 + ")";
+                        });
 
                 legend.append("rect")
-                .attr("x", width - 18)
-                .attr("width", 18)
-                .attr("height", 18)
-                .style("fill", color);
+                        .attr("x", width - 18)
+                        .attr("width", 18)
+                        .attr("height", 18)
+                        .style("fill", color);
 
                 legend.append("text")
-                .attr("x", width - 24)
-                .attr("y", 9)
-                .attr("dy", ".35em")
-                .style("text-anchor", "end")
-                .text(function (d) {
-                    return d;
-                });
+                        .attr("x", width - 24)
+                        .attr("y", 9)
+                        .attr("dy", ".35em")
+                        .style("text-anchor", "end")
+                        .text(function (d) {
+                            return d;
+                        });
 
             });
         </script>
@@ -1828,37 +1705,37 @@
         <script>
 
             var margin = {top: 10, right: 20, bottom: 30, left: 10},
-            width = 700 - margin.left - margin.right,
-            height = 250 - margin.top - margin.bottom;
+                    width = 700 - margin.left - margin.right,
+                    height = 250 - margin.top - margin.bottom;
 
             var x = d3.scale.ordinal()
-            .rangeRoundBands([0, width], .1);
+                    .rangeRoundBands([0, width], .1);
 
             var y = d3.scale.linear()
-            .rangeRound([height, 0]);
+                    .rangeRound([height, 0]);
 
             var color = d3.scale.category10();
 
             var xAxis = d3.svg.axis()
-            .scale(x)
-            .orient("bottom");
+                    .scale(x)
+                    .orient("bottom");
 
             var yAxis = d3.svg.axis()
-            .scale(y)
-            .orient("left")
-            .tickFormat(d3.format(".2s"));
+                    .scale(y)
+                    .orient("left")
+                    .tickFormat(d3.format(".2s"));
 
             var chart13 = d3.select("#C_inf_div").append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-            d3.csv("ConcHA.csv", function (error, data) {
+            d3.csv("concentration_nom.csv", function (error, data) {
                 if (error) throw error;
 
                 color.domain(d3.keys(data[0]).filter(function (key) {
-                    return key !== "ConcHA";
+                    return key !== "concentration_nom";
                 }));
 
                 data.forEach(function (d) {
@@ -1870,105 +1747,95 @@
                 });
 
                 x.domain(data.map(function (d) {
-                    return d.ConcHA;
+                    return d.concentration_nom;
                 }));
-                y.domain([0, 175]);
+                y.domain([0, 125]);
 
                 chart13.append("g")
-                .attr("class", "x axis")
-                .attr("transform", "translate(0," + height + ")")
-                .call(xAxis)
-                .style("fill", function (d) {
-                    if (data < 0) {
-                        return "red"
-                    }
-                    else {
-                        return "black"
-                    }
-                });
-
-                // chart8.append("g")
-                //         // .attr("class", "y axis")
-                //         // .call(yAxis)
-                //         .append("text")
-                //         .attr("transform", "rotate(-90)")
-                //         .attr("y", 6)
-                //         .attr("dy", ".71em")
-                //         .style("text-anchor", "end")
-                //         .text("Peclet");
+                        .attr("class", "x axis")
+                        .attr("transform", "translate(0," + height + ")")
+                        .call(xAxis)
+                        .style("fill", function (d) {
+                            if (data < 0) {
+                                return "red"
+                            }
+                            else {
+                                return "black"
+                            }
+                        });
 
                 chart13.append("g")
-                .attr("class", "x axis")
-                .append("text")
-                .attr("transform", "rotate(-0)")
-                .attr("x", 6)
-                .attr("dx", (width - margin.left - margin.right) / 2)
-                .attr("dy", "0em")
-                .style("text-anchor", "left")
-                .text("Concentration of NOM In Solution [mg/L]");
+                        .attr("class", "x axis")
+                        .append("text")
+                        .attr("transform", "rotate(-0)")
+                        .attr("x", 6)
+                        .attr("dx", (width - margin.left - margin.right) / 2)
+                        .attr("dy", "0em")
+                        .style("text-anchor", "left")
+                        .text("Concentration of NOM In Solution [mg/L]");
 
-                var ConcHA = chart13.selectAll(".ConcHA")
-                .data(data)
-                .enter().append("g")
-                .attr("class", "g")
-                .attr("transform", function (d) {
-                    return "translate(" + x(d.ConcHA) + ",0)";
-                });
+                var concentration_nom = chart13.selectAll(".concentration_nom")
+                        .data(data)
+                        .enter().append("g")
+                        .attr("class", "g")
+                        .attr("transform", function (d) {
+                            return "translate(" + x(d.concentration_nom) + ",0)";
+                        });
 
-                ConcHA.selectAll("rect")
-                .data(function (d) {
-                    return d.ages;
-                })
-                .enter().append("rect")
-                .attr("width", 2)
-                .attr("transform", "translate(" + x.rangeBand() / 2 + "," + 0 + ")")
-                .attr("y", function (d) {
-                    return y(d.y1);
-                })
-                .attr("height", function (d) {
-                    return y(d.y0) - y(d.y1);
-                })
-                .style("fill", function (d) {
-                    return color(d.name);
-                });
+                concentration_nom.selectAll("rect")
+                        .data(function (d) {
+                            return d.ages;
+                        })
+                        .enter().append("rect")
+                        .attr("width", 2)
+                        .attr("transform", "translate(" + x.rangeBand() / 2 + "," + 0 + ")")
+                        .attr("y", function (d) {
+                            return y(d.y1);
+                        })
+                        .attr("height", function (d) {
+                            return y(d.y0) - y(d.y1);
+                        })
+                        .style("fill", function (d) {
+                            return color(d.name);
+                        });
 
-                ConcHA.selectAll("text")
-                .data(function (d) {
-                    return d.ages;
-                })
-                .enter()
-                .append("text")
-                .attr("x", x.rangeBand() / 2)
-                .attr("y", function (d, i) {
-                    return y(d.y1) + (y(d.y0) - y(d.y1)) * 0;
-                })
-                .style("text-anchor", "top")
-                .text(function (d) {
-                    return d.y1- d.y0
-                });
+                concentration_nom.selectAll("text")
+                        .data(function (d) {
+                            return d.ages;
+                        })
+                        .enter()
+                        .append("text")
+                        .attr("x", x.rangeBand() / 2)
+                        .attr("y", function (d, i) {
+                            return y(d.y1) + (y(d.y0) - y(d.y1)) * 0;
+                        })
+                        .style("text-anchor", "top")
+                        .text(function (d) {
+                            return d.y1 - d.y0
+                        });
 
                 var legend = chart13.selectAll(".legend")
-                .data(color.domain().slice().reverse())
-                .enter().append("g")
-                .attr("class", "legend")
-                .attr("transform", function (d, i) {
-                    return "translate(0," + i * 20 + ")";
-                });
+                        .data(color.domain().slice().reverse())
+                        .enter().append("g")
+                        .attr("class", "legend")
+                        .attr("transform", function (d, i) {
+                            return "translate(0," + i * 20 + ")";
+                        });
 
                 legend.append("rect")
-                .attr("x", width - 18)
-                .attr("width", 18)
-                .attr("height", 18)
-                .style("fill", color);
+                        .attr("x", width - 18)
+                        .attr("width", 18)
+                        .attr("height", 18)
+                        .style("fill", color);
 
                 legend.append("text")
-                .attr("x", width - 24)
-                .attr("y", 9)
-                .attr("dy", ".35em")
-                .style("text-anchor", "end")
-                .text(function (d) {
-                    return d;
-                });
+                        .attr("x", width - 24)
+                        .attr("y", 9)
+                        .attr("dy", ".35em")
+                        .style("text-anchor", "end")
+                        .text(function (d) {
+                            return d;
+                        });
 
             });
         </script>

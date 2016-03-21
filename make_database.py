@@ -1,25 +1,25 @@
-import json
+"""
+ -- Run this file first to generate the database.  --
+This script converts many of the dimensioned physical, chemical, and electrical conditions
+into dimensionless parameters. Conversions assume a constant temperature (298.15K), with the
+associated kinematic viscosity and density of water to match. See 'helper_functions.py' for detail
+on specific assumptions for the conversion and references.
+"""
 import os
 import pandas as pd
-import pydot
-import openpyxl
-from sklearn import metrics
-from sklearn import grid_search
-from sklearn import tree
-from sklearn.externals.six import StringIO
-from sklearn.metrics import classification_report
-from sklearn.cross_validation import StratifiedShuffleSplit
 
 from helper_functions import (
-    make_dirs, binary_rp_class_assign, dim_aspect_ratio_assign, dim_peclet_num_assign,
-    attraction_number, gravity_number, debye_length, mass_flow, electrokinetic1, return_ionic_strength,
-    electrokinetic2, rel_permittivity, return_valence, electrolyte_relative_concentration, sorbed_mass_ratio,
-    london_force, porosity_happel, edl_force, column_aspect_ratio, one_hot_dataframe)
+    binary_rp_class_assign, dim_aspect_ratio_assign, dim_peclet_num_assign,
+    attraction_number, gravity_number, debye_length, mass_flow, electrokinetic1,
+    return_ionic_strength,electrokinetic2, rel_permittivity, return_valence,
+    electrolyte_relative_concentration, sorbed_mass_ratio,london_force,
+    porosity_happel, edl_force, column_aspect_ratio, one_hot_dataframe)
 
-# Default database
+# Where is the initial database?
 IMPORT_DATABASE_PATH = os.path.join(
     os.path.dirname(__file__), 'transport_database', 'enmTransportData.xlsx')
 
+# Where will converted database go?
 EXPORT_DATABASE_PATH = os.path.join(
     os.path.dirname(__file__), 'transport_database', 'data.xlsx')
 
@@ -63,15 +63,6 @@ def main(path='.', database_path=IMPORT_DATABASE_PATH):
     target_data = pd.DataFrame(alpha_dataset.rp_shape)
     target_data['rp_shape'] = target_data.apply(binary_rp_class_assign, axis=1)
 
-    # categorical feature evaluation: Step 1 create containers for
-    # feature names and dataframe for uniques.
-    training_cat_feature_names = []
-    training_feature_uniques = pd.DataFrame()
-
-    # categorical feature evaluation: Step 2 copy features into a seperate
-    # database so you don't mess up the first
-    train_data_feature_inspect = training_data.copy(deep=True)
-
     # Apply dimensionless number feature dimension reduction, start by
     # assigning assumed constants (i.e., temp). Note that this requires some
     # data to be factorized. This will be changed in later versions, but now
@@ -95,17 +86,20 @@ def main(path='.', database_path=IMPORT_DATABASE_PATH):
         edl_force,axis=1)
     training_data['n_asp'] = training_data.apply(dim_aspect_ratio_assign, axis=1)
     training_data['n_att'] = training_data.apply(attraction_number, axis=1)
-    training_data['n_g'] = training_data.apply(gravity_number, axis=1)
+    training_data['n_g'] = training_data.apply(gravity_number, axis=1)*1e9 # very small numbers, must change
     training_data['n_Pe'] = training_data.apply(dim_peclet_num_assign, axis=1)
     training_data['n_Lo'] = training_data.apply(london_force, axis=1)
     training_data['n_por'] = training_data.apply(porosity_happel,axis=1)
     training_data['n_dl'] = training_data.apply(edl_force, axis=1)
-    training_data['m_inj'] = training_data.apply(mass_flow, axis=1)
-    training_data['n_m_sorbed'] = training_data.apply(sorbed_mass_ratio, axis=1)
+    training_data['m_inf'] = training_data.apply(mass_flow, axis=1) *1e6 # # from kg to mg
+    # training_data['n_m_sorbed'] = training_data.apply(sorbed_mass_ratio, axis=1)
     training_data['n_z1'] = training_data.apply(electrokinetic1, axis=1)
     training_data['n_z2'] = training_data.apply(electrokinetic2, axis=1)
     training_data['n_asp_c'] = training_data.apply(column_aspect_ratio, axis=1)
-
+    training_data['influent_concentration_enm'] = \
+        training_data['influent_concentration_enm']*1e3 # from kg/m^3 to mg/L
+    training_data['concentration_nom'] = \
+        training_data['concentration_nom']*1e3 # from kg/m^3 to mg/L
     # Output a final copy of the training data for later use
     training_data.to_csv(
         os.path.join(path, 'trainingdataAll.csv'), index=False, header=True)
@@ -131,16 +125,9 @@ def main(path='.', database_path=IMPORT_DATABASE_PATH):
          'electrolyte_id',
          'ph',
          'porosity',
-         'm_inj',
          'debye_length',
          'enm_isoelectric_point',
          'hamaker_constant_combined'], 1)
-
-    # More saving, post feature drop.
-    # target_data.to_csv(os.path.join(path, 'targetdata.csv'),
-    #                    index=False, header=True)
-    # training_data.to_csv(os.path.join(path, 'trainingdata.csv'),
-    #                      index=False, header=True)
 
     # encode the categorical variables using a one-hot scheme so they're
     # correctly considered by decision tree methods
@@ -152,5 +139,5 @@ def main(path='.', database_path=IMPORT_DATABASE_PATH):
     target_data.to_excel(writer, 'target',index=False)
     writer.save()
 
-if __name__ == '__main__':  # wrap inside to prevent parallelize errors on windows.
+if __name__ == '__main__':
     main()

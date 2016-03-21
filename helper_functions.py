@@ -83,7 +83,10 @@ _REL_PERMITTIVITIES = {
     # http://scholar.lib.vt.edu/theses/available/etd-04262005-181042/unrestricted/Ch2Theory.pdf
     'QDs': 10.0,  # CdSe
 }
-
+_BINARY_TO_RP_SHAPE_DIC = {
+    1: "nonexponential",
+    0: "exponential"
+}
 
 def electrokinetic1(row):
     '''
@@ -473,3 +476,12 @@ def one_hot_dataframe(data, cols, replace=False):
         data = data.join(vec_data)
     return (data, vec_data, vec)
 
+
+
+def bin_to_rp_shape(row):
+    '''
+
+    :param row:
+    :return:
+    '''
+    return _BINARY_TO_RP_SHAPE_DIC.get(row.rp_shape, "nonexponential")
