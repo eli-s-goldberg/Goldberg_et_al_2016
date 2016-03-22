@@ -73,14 +73,13 @@ def main(path='.', database_path=DATABASE_PATH, iterations=2,
     f1_binary_average_score_track = []
     f1_report = pd.DataFrame()
 
-    target_data = np.array(np.squeeze(pd.read_excel(database_path, sheetname='target')))
-    training_data = pd.read_excel(database_path, sheetname='training').as_matrix()
-    y_train = target_data
-    x_train = training_data
-
+    target_data = np.squeeze(pd.read_excel(database_path, sheetname='target'))
+    training_data = pd.read_excel(database_path, sheetname='training')
 
     for run in xrange(iterations):
         print run  # Print for convenience  
+        y_train = np.array(target_data)
+        x_train = training_data.as_matrix()
 
         # assign the target data as y_all and the training data as x_all. Notice
         # that we train AND test on the same data. This is not commmon, but
