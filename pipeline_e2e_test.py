@@ -15,6 +15,7 @@ import tempfile
 import unittest
 
 import histogram_visualization
+import make_database
 import optimal_tree
 
 TESTDATA_PATH = os.path.join(os.path.dirname(__file__), 'testdata')
@@ -90,8 +91,12 @@ def update_golden():
 
 def run_pipeline(path):
     """Run the pipeline, putting output into specified directory."""
-    optimal_tree.main(path=path, iterations=2, deterministic=True)
-    histogram_visualization.main(path=path)
+    make_database.main(path=path)
+    training = os.path.join(path, 'data/training_data.csv')
+    target = os.path.join(path, 'data/target_data.csv')
+    optimal_tree.main(training_path=training, target_path=target, path=path,
+                      iterations=2, deterministic=True)
+    histogram_visualization.main(training_path=training, target_path=target, path=path)
 
 class PipelineE2ETest(unittest.TestCase):
     """End-to-end test for whole pipeline."""

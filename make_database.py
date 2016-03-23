@@ -13,20 +13,17 @@ from helper_functions import (
     attraction_number, gravity_number, debye_length, mass_flow, electrokinetic1,
     return_ionic_strength,electrokinetic2, rel_permittivity, return_valence,
     electrolyte_relative_concentration, sorbed_mass_ratio,london_force,
-    porosity_happel, edl_force, column_aspect_ratio, one_hot_dataframe)
+    porosity_happel, edl_force, column_aspect_ratio, one_hot_dataframe, make_dirs)
 
 # Where is the initial database?
 IMPORT_DATABASE_PATH = os.path.join(
     os.path.dirname(__file__), 'transport_database', 'enmTransportData.xlsx')
 
-# Where will converted database go?
-EXPORT_TRAINING_PATH = os.path.join(
-    os.path.dirname(__file__), 'transport_database', 'training_data.csv')
-EXPORT_TARGET_PATH = os.path.join(
-    os.path.dirname(__file__), 'transport_database', 'target_data.csv')
-
 def main(path='.', database_path=IMPORT_DATABASE_PATH):
     """Pre-process database."""
+    # All output goes under this subdirectory.
+    path = os.path.join(path, 'data')
+    make_dirs(path)
     alpha_dataset = pd.read_excel(database_path)
 
     # Identify columns that are not needed for the assessment and drop
@@ -52,7 +49,7 @@ def main(path='.', database_path=IMPORT_DATABASE_PATH):
     alpha_dataset = alpha_dataset.dropna()
 
     # save the dataset for later inspection and use as refinedDataset
-    alpha_dataset.to_csv(os.path.join(path, 'refinedDataset.csv'))
+    alpha_dataset.to_csv(os.path.join(path, 'refined_data.csv'))
 
     # copy the refined dataset to a new variable.
     training_data = alpha_dataset.copy(deep=True)
@@ -104,7 +101,7 @@ def main(path='.', database_path=IMPORT_DATABASE_PATH):
         training_data['concentration_nom']*1e3 # from kg/m^3 to mg/L
     # Output a final copy of the training data for later use
     training_data.to_csv(
-        os.path.join(path, 'trainingdataAll.csv'), index=False, header=True)
+        os.path.join(path, 'training_data_all.csv'), index=False, header=True)
 
     # Drop overlapping features - Combination assessment: temporary
     training_data = training_data.drop(
@@ -136,8 +133,8 @@ def main(path='.', database_path=IMPORT_DATABASE_PATH):
     training_data, _, _ = one_hot_dataframe(
         training_data, ['enm_id','collector_coating', 'nom_id'], replace=True)
 
-    training_data.to_csv(EXPORT_TRAINING_PATH, index=False)
-    target_data.to_csv(EXPORT_TARGET_PATH, index=False)
+    training_data.to_csv(os.path.join(path, 'training_data.csv'), index=False)
+    target_data.to_csv(os.path.join(path, 'target_data.csv'), index=False)
 
 if __name__ == '__main__':
     main()
