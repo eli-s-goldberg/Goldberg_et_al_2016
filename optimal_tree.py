@@ -78,6 +78,7 @@ def main(path='.', training_path=TRAINING_PATH, target_path=TARGET_PATH,
     database_basename = os.path.basename(training_path)
     # Everything goes under this subdirectory.
     path = os.path.join(path, 'classifier')
+    make_dirs(path)
 
     # Loop through all model interactions by looping through database names
     run = 0
@@ -205,7 +206,7 @@ def main(path='.', training_path=TRAINING_PATH, target_path=TARGET_PATH,
                 y_train_or_holdout, y_pred, target_names=['exponential', 'nonexponential']))
             outf.write('\n')
 
-    report_save_path = os.path.join(path, 'classifier', 'scores%d.csv' % (run + 1))
+    report_save_path = os.path.join(path, 'scores%d.csv' % (run + 1))
     f1_report.to_csv(report_save_path)
     f1_report.reset_index(inplace=True)
     print f1_report.describe()
