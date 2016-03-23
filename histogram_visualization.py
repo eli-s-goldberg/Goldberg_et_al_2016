@@ -12,8 +12,10 @@ import pandas as pd
 from helper_functions import (bin_to_rp_shape)
 
 # Default database
-IMPORT_DATABASE_PATH = os.path.join(
-    os.path.dirname(__file__), 'transport_database', 'data.xlsx')
+TRAINING_PATH = os.path.join(
+    os.path.dirname(__file__), 'transport_database', 'training_data.csv')
+TARGET_PATH = os.path.join(
+    os.path.dirname(__file__), 'transport_database', 'target_data.csv')
 
 OUTPUT_DATABASE_PATH = os.path.join(
     os.path.dirname(__file__), 'figures', 'histograms')
@@ -58,11 +60,11 @@ _PARAMETER_BIN_SPACE_DICT = {
     'n_dl': 'log'
 }
 
-
-def main(path='.', database_path=IMPORT_DATABASE_PATH,
-         output_path=OUTPUT_DATABASE_PATH):
-    target_data = pd.read_excel(database_path, sheetname='target')
-    training_data = pd.read_excel(database_path, sheetname='training')
+# TODO(#25) Reorganize output.
+def main(path='.', training_path=TRAINING_PATH, target_path=TARGET_PATH):
+    """Generate histograms."""
+    target_data = pd.read_csv(target_path)
+    training_data = pd.read_csv(training_path)
     target_data['classification'] = target_data.apply(bin_to_rp_shape, axis=1)
 
     training_data = training_data.drop(_CATEGORICAL_FEATURES_TO_DROP, 1)
@@ -72,13 +74,10 @@ def main(path='.', database_path=IMPORT_DATABASE_PATH,
     combined_data['classification'] = target_data['classification']
 
     for parameter in feature_names:
-        OUTPUT_DATABASE_PATH = os.path.join(output_path,str(parameter+'.csv'))
-
+        output_path = os.path.join(path, str(parameter+'.csv'))
         if _PARAMETER_BIN_SPACE_DICT.get(parameter) == 'linear':
-
             low = math.floor(combined_data[parameter].min())  # low floor boundary for parameter
             high = math.ceil(combined_data[parameter].max())  # high ceiling boundary for parameter
-
             bins = np.linspace(low, high, _PARAMETER_BIN_SIZE_DICT.get(parameter), endpoint=True)
             bins = np.unique(bins)  # ensure that bin edges are unique
             exponential_data = combined_data[combined_data['classification'].isin(['exponential'])]
@@ -93,13 +92,10 @@ def main(path='.', database_path=IMPORT_DATABASE_PATH,
             nonexponential_data_grouped.columns = [parameter, 'nonexponential']
             linear_grouped_data = pd.concat([exponential_data_grouped,
                                              nonexponential_data_grouped['nonexponential']], axis=1)
-
-            linear_grouped_data.to_csv(OUTPUT_DATABASE_PATH,index=False)
-
+            linear_grouped_data.to_csv(output_path, index=False)
         else:
             low = math.floor(np.log10(combined_data[parameter].min()))
             high = math.ceil(np.log10(combined_data[parameter].max()))
-
             bins = np.logspace(low, high,
                                _PARAMETER_BIN_SIZE_DICT.get(parameter), endpoint=True, base=10)
             bins = np.unique(bins)  # ensure that bin edges are unique
@@ -107,21 +103,13 @@ def main(path='.', database_path=IMPORT_DATABASE_PATH,
             exponential_data_grouped = exponential_data.groupby(pd.cut(exponential_data[str(parameter)],
                                                                        bins, precision=0)).size().reset_index()
             exponential_data_grouped.columns = [parameter, 'exponential']
-
             nonexponential_data = combined_data[combined_data['classification'].isin(['nonexponential'])]
-
             nonexponential_data_grouped = nonexponential_data.groupby(
                 pd.cut(nonexponential_data[parameter], bins, precision=0)).size().reset_index()
-
             nonexponential_data_grouped.columns = [parameter, 'nonexponential']
-
             nonlinear_grouped_data = pd.concat([exponential_data_grouped,
                                                 nonexponential_data_grouped['nonexponential']], axis=1)
-
-            print nonlinear_grouped_data
-
-
-            nonlinear_grouped_data.to_csv(OUTPUT_DATABASE_PATH,index=False)
+            nonlinear_grouped_data.to_csv(output_path, index=False)
 
 if __name__ == '__main__':
     main()
