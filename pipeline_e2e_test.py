@@ -1,4 +1,4 @@
-"""End-to-end test for the optimal_tree pipeline.
+"""End-to-end test for the full pipeline.
 
 This is a characterization test in Michael Feathers' sense of the term. It's not
 something I plan to keep around; it just provides some assurance that
@@ -14,6 +14,7 @@ import sys
 import tempfile
 import unittest
 
+import histogram_visualization
 import optimal_tree
 
 TESTDATA_PATH = os.path.join(os.path.dirname(__file__), 'testdata')
@@ -53,6 +54,7 @@ def dir_eq(dircmp, recursive=True):
                 print '%s: full diffs not displayed for file type %s' % (
                     fname, ext)
                 continue
+            # TODO(#31) Don't do diffs w/a nonexistent file!
             fname1 = os.path.join(dircmp.left, fname)
             with open(fname1) as file1:
                 lines1 = file1.readlines()
@@ -89,9 +91,10 @@ def update_golden():
 def run_pipeline(path):
     """Run the pipeline, putting output into specified directory."""
     optimal_tree.main(path=path, iterations=2, deterministic=True)
+    histogram_visualization.main(path=path)
 
-class OptimalTreeE2ETest(unittest.TestCase):
-    """End-to-end test for optimal_tree module."""
+class PipelineE2ETest(unittest.TestCase):
+    """End-to-end test for whole pipeline."""
 
     def setUp(self):
         self.tmpdir = tempfile.mkdtemp()
@@ -105,8 +108,8 @@ class OptimalTreeE2ETest(unittest.TestCase):
             dir_eq(filecmp.dircmp(dir1, dir2)),
             msg=('Directories %s and %s differ!' % (dir1, dir2)))
 
-    def test_optimal_tree(self):
-        """Compare full run of optimal_tree against a golden output dir."""
+    def test_pipeline(self):
+        """Compare full run of pipeline against a golden output dir."""
         run_pipeline(self.tmpdir)
         self.assert_dirs_equal(TESTDATA_PATH, self.tmpdir)
 
