@@ -35,8 +35,10 @@ from sklearn.cross_validation import StratifiedShuffleSplit
 from helper_functions import (make_dirs, rules)
 
 # Default database
-DATABASE_PATH = os.path.join(
-    os.path.dirname(__file__), 'transport_database', 'data.xlsx')
+TRAINING_PATH = os.path.join(
+    os.path.dirname(__file__), 'transport_database', 'training_data.csv')
+TARGET_PATH = os.path.join(
+    os.path.dirname(__file__), 'transport_database', 'target_data.csv')
 
 # Seed to use when running in deterministic mode.
 _SEED = 666
@@ -44,37 +46,44 @@ _SEED = 666
 
 # TODO(peterthenelson) Break up into functions
 # TODO(peterthenelson) Use argparse module for flags
-def main(path='.', database_path=DATABASE_PATH, iterations=2,
-         deterministic=True, stratified_holdout=True, holdout_size=0.15,
-         crossfolds=5):
+def main(path='.', training_path=TRAINING_PATH, target_path=TARGET_PATH,
+         iterations=50, deterministic=False, stratified_holdout=True,
+         holdout_size=0.15, crossfolds=5):
     """Find optimal decision tree, write output files.
 
     Parameters
     ----------
     path : str
         Path to output directory.
+    training_path : str
+        Path to training data csv.
+    target_path : str
+        Path to target data csv.
     iterations : int
         Number of runs of fitting the model.
     deterministic : bool
         Turn off randomness (for testing).
-    crossfolds : int
-        Number of folds for crossvalidation.
-    holdout_size : float
-        The percentage of the database not employed for training. 
     stratified_holdout : bool
         Turn off the use of a stratified holdout set. Use with caution: 
         False = train and test on the same data (ok for description, but 
         not prediction).
+    holdout_size : float
+        The percentage of the database not employed for training. 
+    crossfolds : int
+        Number of folds for crossvalidation.
     """
-    database_basename = os.path.basename(database_path)
+    # TODO(peterthenelson) This is a dumb thing to do. Name and location should
+    # be bundled into a config object, rather than trying to derive it from the
+    # path (or one of them).
+    database_basename = os.path.basename(training_path)
 
     # Loop through all model interactions by looping through database names
     run = 0
     f1_binary_average_score_track = []
     f1_report = pd.DataFrame()
 
-    target_data = np.squeeze(pd.read_excel(database_path, sheetname='target'))
-    training_data = pd.read_excel(database_path, sheetname='training')
+    target_data = np.squeeze(pd.read_csv(target_path))
+    training_data = pd.read_csv(training_path)
 
     for run in xrange(iterations):
         print run  # Print for convenience  
