@@ -9,16 +9,13 @@ import math
 import numpy as np
 import pandas as pd
 
-from helper_functions import (bin_to_rp_shape)
+from helper_functions import (bin_to_rp_shape, make_dirs)
 
 # Default database
 TRAINING_PATH = os.path.join(
     os.path.dirname(__file__), 'transport_database', 'training_data.csv')
 TARGET_PATH = os.path.join(
     os.path.dirname(__file__), 'transport_database', 'target_data.csv')
-
-OUTPUT_DATABASE_PATH = os.path.join(
-    os.path.dirname(__file__), 'figures', 'histograms')
 
 _CATEGORICAL_FEATURES_TO_DROP = [
     u'collector_coating=FeOOH', u'collector_coating=IronOxide',
@@ -60,7 +57,6 @@ _PARAMETER_BIN_SPACE_DICT = {
     'n_dl': 'log'
 }
 
-# TODO(#25) Reorganize output.
 def main(path='.', training_path=TRAINING_PATH, target_path=TARGET_PATH):
     """Generate histograms."""
     target_data = pd.read_csv(target_path)
@@ -73,8 +69,9 @@ def main(path='.', training_path=TRAINING_PATH, target_path=TARGET_PATH):
     combined_data = training_data.copy(deep=True)
     combined_data['classification'] = target_data['classification']
 
+    make_dirs(os.path.join(path, 'histograms'))
     for parameter in feature_names:
-        output_path = os.path.join(path, str(parameter+'.csv'))
+        output_path = os.path.join(path, 'histograms', str(parameter+'.csv'))
         if _PARAMETER_BIN_SPACE_DICT.get(parameter) == 'linear':
             low = math.floor(combined_data[parameter].min())  # low floor boundary for parameter
             high = math.ceil(combined_data[parameter].max())  # high ceiling boundary for parameter
