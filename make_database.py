@@ -20,11 +20,13 @@ IMPORT_DATABASE_PATH = os.path.join(
     os.path.dirname(__file__), 'transport_database', 'enmTransportData.xlsx')
 
 # Where will converted database go?
-EXPORT_DATABASE_PATH = os.path.join(
-    os.path.dirname(__file__), 'transport_database', 'data.xlsx')
+EXPORT_TRAINING_PATH = os.path.join(
+    os.path.dirname(__file__), 'transport_database', 'training_data.csv')
+EXPORT_TARGET_PATH = os.path.join(
+    os.path.dirname(__file__), 'transport_database', 'target_data.csv')
 
 def main(path='.', database_path=IMPORT_DATABASE_PATH):
-
+    """Pre-process database."""
     alpha_dataset = pd.read_excel(database_path)
 
     # Identify columns that are not needed for the assessment and drop
@@ -134,10 +136,8 @@ def main(path='.', database_path=IMPORT_DATABASE_PATH):
     training_data, _, _ = one_hot_dataframe(
         training_data, ['enm_id','collector_coating', 'nom_id'], replace=True)
 
-    writer = pd.ExcelWriter(EXPORT_DATABASE_PATH)
-    training_data.to_excel(writer,'training',index=False)
-    target_data.to_excel(writer, 'target',index=False)
-    writer.save()
+    training_data.to_csv(EXPORT_TRAINING_PATH, index=False)
+    target_data.to_csv(EXPORT_TARGET_PATH, index=False)
 
 if __name__ == '__main__':
     main()
