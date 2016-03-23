@@ -76,6 +76,8 @@ def main(path='.', training_path=TRAINING_PATH, target_path=TARGET_PATH,
     # be bundled into a config object, rather than trying to derive it from the
     # path (or one of them).
     database_basename = os.path.basename(training_path)
+    # Everything goes under this subdirectory.
+    path = os.path.join(path, 'classifier')
 
     # Loop through all model interactions by looping through database names
     run = 0
@@ -174,8 +176,7 @@ def main(path='.', training_path=TRAINING_PATH, target_path=TARGET_PATH,
         grab_working_names = [str(i) for i in list(training_data)]
 
         # set the path to save the json representation.
-        json_dir = os.path.join(
-            path, 'figures', 'decisionTreeVisualization', 'flare_reports')
+        json_dir = os.path.join(path, 'flare')
         make_dirs(json_dir)
         json_path = os.path.join(json_dir, 'flare%d.json' % (run + 1))
 
@@ -193,11 +194,9 @@ def main(path='.', training_path=TRAINING_PATH, target_path=TARGET_PATH,
                              class_names=['exponential', 'nonexponential'])
 
         graph = pydot.graph_from_dot_data(dot_data.getvalue())
-        make_dirs(os.path.join(path, 'output/trees/tree'))
-        graph.write_pdf(
-            os.path.join(path, 'output/trees/tree/%d.pdf' % (run + 1)))
-        class_report_dir = os.path.join(
-            path, 'figures', 'decisionTreeVisualization', 'class_reports')
+        make_dirs(os.path.join(path, 'models'))
+        graph.write_pdf(os.path.join(path, 'models/%d.pdf' % (run + 1)))
+        class_report_dir = os.path.join(path, 'class_reports')
         make_dirs(class_report_dir)
         class_report_path = os.path.join(class_report_dir,
                                          'class_report%d.txt' % (run + 1))
@@ -206,9 +205,7 @@ def main(path='.', training_path=TRAINING_PATH, target_path=TARGET_PATH,
                 y_train_or_holdout, y_pred, target_names=['exponential', 'nonexponential']))
             outf.write('\n')
 
-    report_save_path = os.path.join(
-        path, 'figures', 'decisionTreeVisualization',
-        'DecisiontreeScores%d.csv' % (run + 1))
+    report_save_path = os.path.join(path, 'classifier', 'scores%d.csv' % (run + 1))
     f1_report.to_csv(report_save_path)
     f1_report.reset_index(inplace=True)
     print f1_report.describe()
