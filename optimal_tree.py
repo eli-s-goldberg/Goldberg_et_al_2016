@@ -35,25 +35,22 @@ from sklearn.cross_validation import StratifiedShuffleSplit
 from helper_functions import (make_dirs, rules)
 
 # Default database
-TRAINING_PATH = os.path.join(
-    os.path.dirname(__file__), 'transport_database', 'training_data.csv')
-TARGET_PATH = os.path.join(
-    os.path.dirname(__file__), 'transport_database', 'target_data.csv')
+TRAINING_PATH = os.path.join('output', 'data', 'training_data.csv')
+TARGET_PATH = os.path.join('output', 'data', 'target_data.csv')
 
 # Seed to use when running in deterministic mode.
 _SEED = 666
 
-
-# TODO(peterthenelson) Break up into functions
-# TODO(peterthenelson) Use argparse module for flags
-def main(path='.', training_path=TRAINING_PATH, target_path=TARGET_PATH,
-         iterations=50, deterministic=False, stratified_holdout=True,
-         holdout_size=0.15, crossfolds=5):
+# TODO(peterthenelson) Break up into smaller functions.
+def main(
+    output_dir='output', training_path=TRAINING_PATH, target_path=TARGET_PATH,
+    iterations=50, deterministic=False, stratified_holdout=True,
+    holdout_size=0.15, crossfolds=5):
     """Find optimal decision tree, write output files.
 
     Parameters
     ----------
-    path : str
+    output_dir : str
         Path to output directory.
     training_path : str
         Path to training data csv.
@@ -77,8 +74,8 @@ def main(path='.', training_path=TRAINING_PATH, target_path=TARGET_PATH,
     # path (or one of them).
     database_basename = os.path.basename(training_path)
     # Everything goes under this subdirectory.
-    path = os.path.join(path, 'classifier')
-    make_dirs(path)
+    output_dir = os.path.join(output_dir, 'classifier')
+    make_dirs(output_dir)
 
     # Loop through all model interactions by looping through database names
     run = 0
@@ -160,7 +157,7 @@ def main(path='.', training_path=TRAINING_PATH, target_path=TARGET_PATH,
         y_pred_frame = pd.DataFrame(y_pred, columns=['predicted'])
         y_truth_frame = pd.DataFrame(y_train_or_holdout, columns=['truth'])
         comparison = pd.concat([y_pred_frame, y_truth_frame], axis=1)
-        comparison.to_csv(os.path.join(path, 'comparison.csv'))
+        comparison.to_csv(os.path.join(output_dir, 'comparison.csv'))
 
         # initialize scoring tracking dataframe to store the data
         f1_track = pd.DataFrame()
@@ -177,7 +174,7 @@ def main(path='.', training_path=TRAINING_PATH, target_path=TARGET_PATH,
         grab_working_names = [str(i) for i in list(training_data)]
 
         # set the path to save the json representation.
-        json_dir = os.path.join(path, 'flare')
+        json_dir = os.path.join(output_dir, 'flare')
         make_dirs(json_dir)
         json_path = os.path.join(json_dir, 'flare%d.json' % (run + 1))
 
@@ -195,9 +192,9 @@ def main(path='.', training_path=TRAINING_PATH, target_path=TARGET_PATH,
                              class_names=['exponential', 'nonexponential'])
 
         graph = pydot.graph_from_dot_data(dot_data.getvalue())
-        make_dirs(os.path.join(path, 'models'))
-        graph.write_pdf(os.path.join(path, 'models/%d.pdf' % (run + 1)))
-        class_report_dir = os.path.join(path, 'class_reports')
+        make_dirs(os.path.join(output_dir, 'models'))
+        graph.write_pdf(os.path.join(output_dir, 'models/%d.pdf' % (run + 1)))
+        class_report_dir = os.path.join(output_dir, 'class_reports')
         make_dirs(class_report_dir)
         class_report_path = os.path.join(class_report_dir,
                                          'class_report%d.txt' % (run + 1))
@@ -206,12 +203,11 @@ def main(path='.', training_path=TRAINING_PATH, target_path=TARGET_PATH,
                 y_train_or_holdout, y_pred, target_names=['exponential', 'nonexponential']))
             outf.write('\n')
 
-    report_save_path = os.path.join(path, 'scores%d.csv' % (run + 1))
+    report_save_path = os.path.join(output_dir, 'scores%d.csv' % (run + 1))
     f1_report.to_csv(report_save_path)
     f1_report.reset_index(inplace=True)
     print f1_report.describe()
     print "best performing decision tree index: ", f1_report['average'].argmax()
-
 
 if __name__ == '__main__':  # wrap inside to prevent parallelize errors on windows.
     main()

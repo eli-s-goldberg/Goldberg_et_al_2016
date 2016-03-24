@@ -19,11 +19,11 @@ from helper_functions import (
 IMPORT_DATABASE_PATH = os.path.join(
     os.path.dirname(__file__), 'transport_database', 'enmTransportData.xlsx')
 
-def main(path='.', database_path=IMPORT_DATABASE_PATH):
+def main(output_dir='output', database_path=IMPORT_DATABASE_PATH):
     """Pre-process database."""
     # All output goes under this subdirectory.
-    path = os.path.join(path, 'data')
-    make_dirs(path)
+    output_dir = os.path.join(output_dir, 'data')
+    make_dirs(output_dir)
     alpha_dataset = pd.read_excel(database_path)
 
     # Identify columns that are not needed for the assessment and drop
@@ -49,7 +49,7 @@ def main(path='.', database_path=IMPORT_DATABASE_PATH):
     alpha_dataset = alpha_dataset.dropna()
 
     # save the dataset for later inspection and use as refinedDataset
-    alpha_dataset.to_csv(os.path.join(path, 'refined_data.csv'))
+    alpha_dataset.to_csv(os.path.join(output_dir, 'refined_data.csv'))
 
     # copy the refined dataset to a new variable.
     training_data = alpha_dataset.copy(deep=True)
@@ -101,7 +101,7 @@ def main(path='.', database_path=IMPORT_DATABASE_PATH):
         training_data['concentration_nom']*1e3 # from kg/m^3 to mg/L
     # Output a final copy of the training data for later use
     training_data.to_csv(
-        os.path.join(path, 'training_data_all.csv'), index=False, header=True)
+        os.path.join(output_dir, 'training_data_all.csv'), index=False, header=True)
 
     # Drop overlapping features - Combination assessment: temporary
     training_data = training_data.drop(
@@ -133,8 +133,8 @@ def main(path='.', database_path=IMPORT_DATABASE_PATH):
     training_data, _, _ = one_hot_dataframe(
         training_data, ['enm_id','collector_coating', 'nom_id'], replace=True)
 
-    training_data.to_csv(os.path.join(path, 'training_data.csv'), index=False)
-    target_data.to_csv(os.path.join(path, 'target_data.csv'), index=False)
+    training_data.to_csv(os.path.join(output_dir, 'training_data.csv'), index=False)
+    target_data.to_csv(os.path.join(output_dir, 'target_data.csv'), index=False)
 
 if __name__ == '__main__':
     main()

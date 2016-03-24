@@ -14,7 +14,8 @@ variable-rgx=[a-z_][a-z0-9_]{0,35}$
 variable-name-hint=[a-z_][a-z0-9_]{0,35}$
 function-rgx=[a-z_][a-z0-9_]{0,35}$
 function-name-hint=[a-z_][a-z0-9_]{0,35}$
-
+argument-rgx=[a-z_][a-z0-9_]{0,35}$
+argument-name-hint=[a-z_][a-z0-9_]{0,35}$
 
 [DESIGN]
 

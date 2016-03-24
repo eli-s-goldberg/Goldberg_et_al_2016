@@ -91,12 +91,13 @@ def update_golden():
 
 def run_pipeline(path):
     """Run the pipeline, putting output into specified directory."""
-    make_database.main(path=path)
+    make_database.main(output_dir=path)
     training = os.path.join(path, 'data/training_data.csv')
     target = os.path.join(path, 'data/target_data.csv')
-    optimal_tree.main(training_path=training, target_path=target, path=path,
-                      iterations=2, deterministic=True)
-    histogram_visualization.main(training_path=training, target_path=target, path=path)
+    optimal_tree.main(training_path=training, target_path=target,
+                      output_dir=path, iterations=2, deterministic=True)
+    histogram_visualization.main(training_path=training, target_path=target,
+                                 output_dir=path)
 
 class PipelineE2ETest(unittest.TestCase):
     """End-to-end test for whole pipeline."""
