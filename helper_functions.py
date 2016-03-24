@@ -21,7 +21,6 @@ def make_dirs(path):
         if exc.errno != errno.EEXIST or not os.path.isdir(path):
             raise
 
-
 # Constants
 _BOLTZ = 1.3806504e-23  # # Boltzmann's constant [J/K]
 _TEMP_K = 25 + 273.15  # Assumed all experiments at 25 C
