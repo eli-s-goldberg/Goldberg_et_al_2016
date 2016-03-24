@@ -10,10 +10,6 @@ import os
 import pandas
 from sklearn.feature_extraction import DictVectorizer
 
-
-# TODO(peterthenelson) Add docstrings.
-# pylint: disable=missing-docstring
-
 def make_dirs(path):
     """Recursively make directories, ignoring when they already exist.
 
@@ -89,7 +85,7 @@ _BINARY_TO_RP_SHAPE_DIC = {
 }
 
 def electrokinetic1(row):
-    '''
+    """
     notes:  1) zeta potentials are in mV. if in V, remove the 1e3
             2) relative dialectric is for water, if this is not true,
             make a column and change the function.
@@ -104,15 +100,14 @@ def electrokinetic1(row):
             Journal of Colloid and Interface Science 83, 428–448 (1981).
     :param row:
     :return: 1st electrokinetic parameter
-    '''
+    """
     a = row.enm_diameter / 2  # particle radius
     zp = row.enm_zeta_potential / 1e3  # particle zeta potential in V
     zc = row.collector_zeta_potential / 1e3  # collector zeta potential
     return _WATER_DIALECTRIC * a * (zp ** 2 + zc ** 2) / (4 * _BOLTZ * _TEMP_K)
 
-
 def electrokinetic2(row):
-    '''
+    """
     notes:  1) zeta potentials are in mV. if in V, remove the 1e3
             2) relative dialectric is for water, if this is not true,
             make a column and change the function.
@@ -128,7 +123,7 @@ def electrokinetic2(row):
             Journal of Colloid and Interface Science 83, 428–448 (1981).
     :param row:
     :return: 2nd electrokinetic parameter
-    '''
+    """
 
     zp = row.enm_zeta_potential / 1e3  # particle zeta potential
     zc = row.collector_zeta_potential / 1e3  # collector zeta potential
@@ -136,34 +131,34 @@ def electrokinetic2(row):
     denominator = 1 + (zp / zc) ** 2
     return numerator / denominator
 
-
 def return_valence(row):
-    '''
+    """Find valence.
+
     notes: match ENM and return valence
     :param row:
     :return: corresponding electrolyte valence
-    '''
+    """
     return _ELECTROLYTE_VALENCE.get(row.electrolyte_id, [0, 0])
 
-
 def electrolyte_relative_concentration(row):
-    '''
+    """Find relative concentration of electrolyte.
+
     notes: match ENM and return relative concentration of ions
     :param row:
     :return: corresponding relative ion concentration
-    '''
+    """
     return _ELECTROLYTE_CONCENTRATION.get(row.electrolyte_id, [0, 0])
 
-
 def return_ionic_strength(row):
-    '''
+    """Find ionic strength.
+
     notes: if the is an electrolyte in solution (e.g., electrolyte_rel_conc != 0),
     calculate ionic strength if not, then use the pH to determine the concentration of ions in solution.
     :param  row:
             valence:
             electrolyte_rel_conc:
     :return:
-    '''
+    """
     if row.electrolyte_concentration != 0:
         c_i_0 = row.electrolyte_concentration * row.electrolyte_rel_conc[0]
         c_i_1 = row.electrolyte_concentration * row.electrolyte_rel_conc[1]
@@ -175,15 +170,15 @@ def return_ionic_strength(row):
         oh_minus_valence = 1
         return 0.5 * (h_plus_ions * h_plus_valence ** 2) + (oh_minus_ions * oh_minus_valence ** 2)
 
-
 def debye_length(row):
+    """Calculate Debye length."""
     numerator = _PERM_FREE_SPACE * row.enm_relative_permittivity * _BOLTZ * _TEMP_K
     denominator = 2.0 * _AVOGADRO * _ELEC_CHARGE ** 2.0 * row.ionic_strength
     return (numerator / denominator) ** 0.5
 
-
 def edl_force(row):
-    '''
+    """Find EDL force.
+
     references:
             (1) Nathalie Tufenkji and Menachem Elimelech.
             "Correlation Equation for Predicting Single-Collector
@@ -192,12 +187,12 @@ def edl_force(row):
             Environmental Science & Technology, 38(2):529–536, January 2004
     :param row:
     :return: dimensionless EDL force parameter
-    '''
+    """
     return row.enm_diameter / row.debye_length
 
-
 def dim_aspect_ratio_assign(row):
-    '''
+    """Aspect dimensionless aspect ratio.
+
     references:
             (1) Nathalie Tufenkji and Menachem Elimelech.
             "Correlation Equation for Predicting Single-Collector
@@ -206,12 +201,12 @@ def dim_aspect_ratio_assign(row):
             Environmental Science & Technology, 38(2):529–536, January 2004
     :param row:
     :return: dimensionless aspect ratio
-    '''
+    """
     return row.enm_diameter / row.collector_diameter
 
-
 def dim_peclet_num_assign(row):
-    '''
+    """Find Pectle number.
+
     notes: 1) Assumes temperature of experiment is at 25C.
     references:
             (1) Nathalie Tufenkji and Menachem Elimelech.
@@ -221,24 +216,24 @@ def dim_peclet_num_assign(row):
             Environmental Science & Technology, 38(2):529–536, January 2004
     :param row:
     :return: dimensionless peclet number
-    '''
+    """
     stokes_einstein_diffusion = _BOLTZ * _TEMP_K / (3 * math.pi * _KINEMATIC_WATER_VISCOSITY *
                                                     row.enm_diameter)
     return row.darcy_velocity * row.collector_diameter / stokes_einstein_diffusion
 
-
 def attraction_number(row):
-    '''
+    """Find attraction number.
+
     notes:  1) Assumes temperature of experiment is at 25C.
     :param row:
     :return:
-    '''
+    """
     denominator = 3.0 * math.pi * _KINEMATIC_WATER_VISCOSITY * row.enm_diameter ** 2 * row.darcy_velocity
     return row.hamaker_constant_combined / denominator
 
-
 def london_force(row):
-    '''
+    """Find London force.
+
     notes:  1) Assumes temperature of experiment is at 25C.
     references:
             (1) Nathalie Tufenkji and Menachem Elimelech.
@@ -248,12 +243,11 @@ def london_force(row):
             Environmental Science & Technology, 38(2):529–536, January 2004
     :param row:
     :return:
-    '''
+    """
     return row.hamaker_constant_combined / (6 * _BOLTZ * _TEMP_K)
 
-
 def gravity_number(row):
-    '''
+    """
     notes:  1) Assumes temperature of experiment is at 25C.
     references:
             (1) Nathalie Tufenkji and Menachem Elimelech.
@@ -263,26 +257,25 @@ def gravity_number(row):
             Environmental Science & Technology, 38(2):529–536, January 2004
     :param row:
     :return:
-    '''
+    """
     p_radius = row.enm_diameter / 2.0
     numerator = (2.0 * p_radius ** 2) * (row.enm_density - _WATER_DENSITY) * _GRAV
     demoninator = 9 * _KINEMATIC_WATER_VISCOSITY * row.darcy_velocity
     return numerator / demoninator
 
-
 def porosity_happel(row):
-    '''
+    """
 
     :param row:
     :return:
-    '''
+    """
     gam = (1 - row.porosity) ** (1 / 3)
     numerator = 2 * (1 - gam ** 5)
     denominator = 2 - 3 * gam + 3 * gam ** 5 - 2 * gam ** 6
     return numerator / denominator
 
-
 def mass_flow(row):
+    """Calculate the mass flow."""
     l = row.column_length
     w = row.column_width
     a = math.pi / 4 * row.column_width ** 2
@@ -290,8 +283,8 @@ def mass_flow(row):
     p_vs = row.influent_pore_volumes
     return l * w * a * p * p_vs
 
-
 def sorbed_mass_ratio(row):
+    """Find ratio of sorbed mass."""
     l = row.column_length
     w = row.column_width
     a = math.pi / 4 * row.column_width ** 2
@@ -302,31 +295,30 @@ def sorbed_mass_ratio(row):
     sorb_ratio = row.m_inj / total_collector_mass
     return sorb_ratio
 
-
 def column_aspect_ratio(row):
+    """Find aspect ratio of column."""
     return row.column_length / row.column_width
 
-
 def binary_rp_class_assign(row):
+    """Translate RP class into binary."""
     if row.rp_shape in _EXP_RP_SHAPES:
         return 0
     else:
         return 1
 
-
 def binary_rp_class_assign_labels(row):
+    """Assign labels based on RP class."""
     if row.rp_shape in _EXP_RP_SHAPES:
         return "exponential"
     else:
         return "nonexponential"
 
-
 def rel_permittivity(row):
+    """Calculate relative permittivity."""
     return _REL_PERMITTIVITIES.get(row.enm_id, 10.0)
 
-
 def tufenkji_eta0(row):
-    '''
+    """
     notes: the empirical constants are derived empirically for use with CFT.
     references:
             (1) Nathalie Tufenkji and Menachem Elimelech.
@@ -336,7 +328,7 @@ def tufenkji_eta0(row):
             Environmental Science & Technology, 38(2):529–536, January 2004
     :param row:
     :return: returns the theoretical single collector efficiency
-    '''
+    """
     n_dl = row.N_Dl
     n_z1 = row.N_Z1
     n_z2 = row.N_Z2
@@ -350,7 +342,6 @@ def tufenkji_eta0(row):
             3.176 * n_as ** (0.333) * n_r ** (-0.081) * n_pe ** (-0.715) * n_lo ** (2.687) +
             0.222 * n_as * n_r ** (3.041) * n_pe ** (-0.514) * n_lo ** (0.125) +
             n_r ** (-0.24) * n_g ** (1.11) * n_lo)
-
 
 def rules_gradient_boost(clf, features, labels, node_index=0):
     """Structure of rules in a fit decision tree classifier
@@ -407,9 +398,8 @@ def rules_gradient_boost(clf, features, labels, node_index=0):
     # print node
     return node
 
-
 def rules(clf, features, labels, node_index=0):
-    """Structure of rules in a fit decision tree classifier
+    """Structure of rules in a fit decision tree classifier.
 
     Parameters
     ----------
@@ -450,14 +440,12 @@ def rules(clf, features, labels, node_index=0):
     return node
 
 def one_hot_dataframe(data, cols, replace=False):
-    """
-    Small script that shows hot to do one hot encoding
-    of categorical columns in a pandas DataFrame.
+    """Do hot encoding of categorical columns in a pandas DataFrame.
+
     See:
     http://scikit-learn.org/dev/modules/generated/sklearn.preprocessing.OneHotEncoder.html#sklearn.preprocessing
     .OneHotEncoder
     http://scikit-learn.org/dev/modules/generated/sklearn.feature_extraction.DictVectorizer.html
-
 
     https://gist.github.com/kljensen/5452382
 
@@ -476,12 +464,10 @@ def one_hot_dataframe(data, cols, replace=False):
         data = data.join(vec_data)
     return (data, vec_data, vec)
 
-
-
 def bin_to_rp_shape(row):
-    '''
+    """Translate binary back to RP shape.
 
     :param row:
     :return:
-    '''
+    """
     return _BINARY_TO_RP_SHAPE_DIC.get(row.rp_shape, "nonexponential")

@@ -1,9 +1,9 @@
-'''
+"""
 This file imports the database and does a series of recursive histograms, where the data can be binned as a function
 of one or more variables.
 For instance, if the peclet numbers for the experiments range from 90 to  1e6, but I want to know which experiments
 within that range result in an exponential profile, then I have to do this.
-'''
+"""
 import os
 import math
 import numpy as np
