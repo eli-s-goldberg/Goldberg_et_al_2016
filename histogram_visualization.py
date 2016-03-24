@@ -4,6 +4,8 @@ of one or more variables.
 For instance, if the peclet numbers for the experiments range from 90 to  1e6, but I want to know which experiments
 within that range result in an exponential profile, then I have to do this.
 """
+
+import argparse
 import os
 import math
 import numpy as np
@@ -106,5 +108,14 @@ def main(output_dir='output', training_path=TRAINING_PATH, target_path=TARGET_PA
                                                 nonexponential_data_grouped['nonexponential']], axis=1)
             nonlinear_grouped_data.to_csv(output_path, index=False)
 
+def parse_args():
+    """Parse commandline arguments into a dict."""
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--output_dir', default='output')
+    parser.add_argument('--training_path', default=TRAINING_PATH)
+    parser.add_argument('--target_path', default=TARGET_PATH)
+    parsed = parser.parse_args()
+    return {k: getattr(parsed, k) for k in dir(parsed) if not k.startswith('_')}
+
 if __name__ == '__main__':
-    main()
+    main(**parse_args())

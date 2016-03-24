@@ -5,6 +5,8 @@ into dimensionless parameters. Conversions assume a constant temperature (298.15
 associated kinematic viscosity and density of water to match. See 'helper_functions.py' for detail
 on specific assumptions for the conversion and references.
 """
+
+import argparse
 import os
 import pandas as pd
 
@@ -136,5 +138,13 @@ def main(output_dir='output', database_path=IMPORT_DATABASE_PATH):
     training_data.to_csv(os.path.join(output_dir, 'training_data.csv'), index=False)
     target_data.to_csv(os.path.join(output_dir, 'target_data.csv'), index=False)
 
+def parse_args():
+    """Parse commandline arguments into a dict."""
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--output_dir', default='output')
+    parser.add_argument('--database_path', default=IMPORT_DATABASE_PATH)
+    parsed = parser.parse_args()
+    return {k: getattr(parsed, k) for k in dir(parsed) if not k.startswith('_')}
+
 if __name__ == '__main__':
-    main()
+    main(**parse_args())
