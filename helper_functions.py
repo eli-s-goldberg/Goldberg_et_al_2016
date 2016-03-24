@@ -21,6 +21,19 @@ def make_dirs(path):
         if exc.errno != errno.EEXIST or not os.path.isdir(path):
             raise
 
+def _str_to_bool(s):
+    """Convert string to bool (in argparse context)."""
+    if s.lower() not in ['true', 'false']:
+        raise ValueError('Need bool; got %r' % s)
+    return {'true': True, 'false': False}[s.lower()]
+
+def add_boolean_argument(parser, name, default=False):
+    """Add a boolean argument to an ArgumentParser instance."""
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
+        '--' + name, nargs='?', default=default, const=True, type=_str_to_bool)
+    group.add_argument('--no' + name, dest=name, action='store_false')
+
 # Constants
 _BOLTZ = 1.3806504e-23  # # Boltzmann's constant [J/K]
 _TEMP_K = 25 + 273.15  # Assumed all experiments at 25 C

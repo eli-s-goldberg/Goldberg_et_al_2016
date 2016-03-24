@@ -20,6 +20,7 @@ located, modify the appropriate variable in the index.html file contained within
 the decisionTreeVisualization folder and run it.
 """
 
+import argparse
 import json
 import os
 import pandas as pd
@@ -32,7 +33,7 @@ from sklearn.externals.six import StringIO
 from sklearn.metrics import classification_report
 from sklearn.cross_validation import StratifiedShuffleSplit
 
-from helper_functions import (make_dirs, rules)
+from helper_functions import (make_dirs, rules, add_boolean_argument)
 
 # Default database
 TRAINING_PATH = os.path.join('output', 'data', 'training_data.csv')
@@ -209,5 +210,20 @@ def main(
     print f1_report.describe()
     print "best performing decision tree index: ", f1_report['average'].argmax()
 
+def parse_args():
+    """Parse commandline arguments into a dict."""
+    parser = argparse.ArgumentParser()
+    # TODO(peterthenelson) I'm not a fan of duplicating the defaults here, but I
+    # don't see a better way.
+    parser.add_argument('--output_dir', default='output')
+    parser.add_argument('--training_path', default=TRAINING_PATH)
+    parser.add_argument('--target_path', default=TARGET_PATH)
+    parser.add_argument('--iterations', default=50, type=int)
+    add_boolean_argument(parser, 'stratified_holdout', default=True)
+    parser.add_argument('--holdout_size', default=0.15, type=float)
+    parser.add_argument('--crossfolds', default=5, type=int)
+    parsed = parser.parse_args()
+    return {k: getattr(parsed, k) for k in dir(parsed) if not k.startswith('_')}
+
 if __name__ == '__main__':  # wrap inside to prevent parallelize errors on windows.
-    main()
+    main(**parse_args())
