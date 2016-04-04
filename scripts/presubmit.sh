@@ -19,8 +19,6 @@ then
   exit 1
 fi
 
-# TODO(peterthenelson) Check for untracked files.
-
 echo Running lint...
 scripts/lint.sh
 
