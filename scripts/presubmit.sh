@@ -4,6 +4,15 @@
 set -e
 cd "$(git rev-parse --show-toplevel)"
 
+echo Checking for unstaged changes...
+if ! UNSTAGED=$(git diff --name-only --exit-code)
+then
+  printf "Unstaged changes!:\n%s\n" "$UNSTAGED"
+  exit 1
+fi
+
+# TODO(peterthenelson) Check for untracked files.
+
 echo Running lint...
 scripts/lint.sh
 
