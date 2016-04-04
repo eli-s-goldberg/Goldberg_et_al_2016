@@ -11,6 +11,14 @@ then
   exit 1
 fi
 
+echo Checking for untracked files...
+UNTRACKED=$(git ls-files --other --exclude-standard)
+if [[ "$UNTRACKED" ]]
+then
+  printf "Untracked files!:\n%s\n" "$UNTRACKED"
+  exit 1
+fi
+
 # TODO(peterthenelson) Check for untracked files.
 
 echo Running lint...
