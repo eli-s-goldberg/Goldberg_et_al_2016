@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <title>Smoothed D3.js Radar Chart</title>
+
+    <!-- Google fonts -->
+    <link href="http://fonts.googleapis.com/css?family=Open+Sans:400,300" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet" type="text/css">
+
+    <!-- D3.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
+
+    <!-- Font Awesome CSS -->
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.2/css/font-awesome.min.css" rel="stylesheet" 
+          integrity="sha384-aNUYGqSUL9wG/vP7+cWZ5QOM4gsQou3sBfWRr/8S3R1Lv0rysEmnwsRKMbhiQX/O" crossorigin="anonymous">
+
+    <style>
+      body {
+        font-family: "Open Sans", sans-serif;
+        font-size: 11px;
+        font-weight: 300;
+        fill: #242424;
+        text-align: center;
+        text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, -1px 0 0 #fff, 0 -1px 0 #fff;
+        cursor: default;
+      }
+
+      .legend {
+        font-family: "Raleway", sans-serif;
+        fill: #333333;
+      }
+
+      .tooltip {
+        fill: #333333;
+      }
+
+      #axes {
+        text-align: left;
+        width: 10em;
+        margin: 0 auto;
+      }
+
+      /* For checkboxes */
+      input[type=checkbox] { display:none; }
+      input[type=checkbox] + label:before {
+        font-family: FontAwesome;
+        display: inline-block;
+        content: "\f096";
+        letter-spacing: 10px;
+      }
+      input[type=checkbox]:checked + label:before {
+        content: "\f046";
+        letter-spacing: 7px;
+      }
+    </style>
+
+    <script src="radarChart.js"></script>
+    <script>
+      var data = ${data};
+
+      var margin = {top: 100, right: 100, bottom: 100, left: 100},
+          width = Math.min(700, window.innerWidth - 10) - margin.left - margin.right,
+          height = Math.min(width, window.innerHeight - margin.top - margin.bottom - 20);
+      var color = d3.scale.ordinal().range(
+          ["#EDC951", "#CC333F", "#00A0B0"]);
+      var radarChartOptions = {
+        w: width,
+        h: height,
+        margin: margin,
+        maxValue: 5,
+        levels: 5,
+        roundStrokes: false,
+        color: color
+      };
+      var getCheckedAxes = function() {
+        var checkedAxes = {};
+        var axisInputs = document.querySelectorAll("#axes input");
+        for (var i = 0; i < axisInputs.length; i++) {
+          checkedAxes[axisInputs[i].getAttribute("data-axis")] = axisInputs[i].checked;
+        };
+        return checkedAxes;
+      };
+      var updateChart = function() {
+        var checkedAxes = getCheckedAxes();
+        var filtered = [];
+        for (var i = 0; i < data.length; i++) {
+          filtered.push([]);
+          for (var j = 0; j < data[i].length; j++) {
+            if (checkedAxes[data[i][j].axis]) {
+              filtered[i].push(data[i][j]);
+            }
+          }
+        }
+        RadarChart(".radarChart", filtered, radarChartOptions);
+      };
+      document.addEventListener("DOMContentLoaded", function() {
+        var axisInputs = document.querySelectorAll("#axes input");
+        for (var i = 0; i < axisInputs.length; i++) {
+          axisInputs[i].addEventListener("change", updateChart);
+        };
+        updateChart();
+      }, false);
+    </script>
+  </head>
+  <body>
+    <div class="radarChart"></div>
+    <form id="axes">
+${checkboxes}
+    </form>
+  </body>
+</html>
